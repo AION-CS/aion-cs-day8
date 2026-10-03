@@ -13,6 +13,26 @@ export const BUDGET = 200000;
 export const MONTHS = 6;
 export type Bucket = 1 | 2 | 3;
 
+/**
+ * The category printed after the weeks (CLAUDE.md #45): which kind of thing from the theory of Materi A2, A3 and A5 a measure is. It is
+ * a fact about the measure taken from those cards' own tests, never a score and never the problem it answers (that stays the
+ * learner's job). One line above the list says which kinds the brief's three problems call for and which kind it does not.
+ */
+export type MeasureArea = "reco" | "comm" | "auto" | "meas" | "price";
+export const MEASURE_AREA_LABEL = bi({
+  reco: t("Recommendation", "Empfehlung"),
+  comm: t("Individualised communication", "Individualisierte Kommunikation"),
+  auto: t("Automation", "Automatisierung"),
+  meas: t("Measurement", "Messung"),
+  price: t("Price, not a technology", "Preis, keine Technologie"),
+});
+export const AREA_NOTE = bi({
+  v: t(
+    "The brief names three problems: impersonal communication, a low conversion rate and measures that cannot be measured. They call for personalising what a customer sees or hears, for automation that works for every customer, and for measurement. A price cut is none of the kinds taught in Materi A2, A3 and A5.",
+    "Der Auftrag nennt drei Probleme: unpersönliche Kommunikation, eine niedrige Conversion Rate und Maßnahmen, die sich nicht messen lassen. Sie verlangen, dass sich anpasst, was ein Kunde sieht oder hört, Automatisierung, die für jeden Kunden arbeitet, und Messung. Eine Preissenkung ist keine der Arten aus Materi A2, A3 und A5.",
+  ),
+});
+
 export type ProblemId = "impersonal" | "conversion" | "measure";
 export const PROBLEM_IDS: ProblemId[] = ["impersonal", "conversion", "measure"];
 export const PROBLEM_LABEL = bi({
@@ -39,6 +59,10 @@ export type Measure = {
   id: MeasureId;
   name: string;
   what: string;
+  /** One concrete scene from AIConnect's day, and who does what (CLAUDE.md #46). */
+  scene: string;
+  who: string;
+  area: MeasureArea;
   basis: string;
   evidence: Evidence;
   cost: number;
@@ -53,6 +77,9 @@ export const MEASURES: Measure[] = bi([
     id: "reco" as MeasureId,
     name: t("Recommendation engine for offers and the portal", "Recommendation Engine für Angebote und Portal"),
     what: t("Suggests the next add-on for each customer, in offer e-mails and in the portal, from what similar customers bought.", "Schlägt jedem Kunden das nächste Add-on vor, in Angebots-E-Mails und im Portal, aus dem, was ähnliche Kunden kauften."),
+    scene: t("A customer who has just added 20 users opens the portal and sees the admin training package that most firms of that size bought next.", "Ein Kunde, der gerade 20 Nutzer hinzugefügt hat, öffnet das Portal und sieht das Admin-Schulungspaket, das die meisten Firmen dieser Größe als Nächstes kauften."),
+    who: t("The product team builds it once; after that it runs by itself for every customer, and nobody has to pick the offer by hand.", "Das Produktteam baut sie einmal; danach läuft sie für jeden Kunden von selbst, und niemand muss das Angebot von Hand wählen."),
+    area: "reco" as MeasureArea,
     basis: t("Measured by: conversion rate against a control group that keeps the standard offer.", "Gemessen durch: Conversion Rate gegen eine Kontrollgruppe, die das Standardangebot behält."),
     evidence: "controlled" as Evidence,
     cost: 60000,
@@ -65,6 +92,9 @@ export const MEASURES: Measure[] = bi([
     id: "trigger" as MeasureId,
     name: t("Behaviour-triggered e-mails", "Verhaltensbasierte Trigger-E-Mails"),
     what: t("E-mails sent when a customer does something (adds users, stops logging in), with content built from what they used.", "E-Mails, die verschickt werden, wenn ein Kunde etwas tut (Nutzer hinzufügt, sich nicht mehr anmeldet), mit Inhalten aus dem, was er nutzte."),
+    scene: t("A customer has not logged in for 21 days and gets a short e-mail from its own contact person that names the two features it used most.", "Ein Kunde hat sich 21 Tage nicht angemeldet und bekommt eine kurze E-Mail seiner eigenen Ansprechperson, die die zwei Funktionen nennt, die er am meisten nutzte."),
+    who: t("Marketing sets up the triggers once; the mailing system sends; the customer sees the name of its own account manager.", "Das Marketing richtet die Trigger einmal ein; das Mailing-System versendet; der Kunde sieht den Namen seines eigenen Account Managers."),
+    area: "comm" as MeasureArea,
     basis: t("Measured by: reply and conversion rate against customers who only get the monthly newsletter.", "Gemessen durch: Antwort- und Conversion Rate gegen Kunden, die nur den monatlichen Newsletter bekommen."),
     evidence: "controlled" as Evidence,
     cost: 30000,
@@ -77,6 +107,9 @@ export const MEASURES: Measure[] = bi([
     id: "kpi" as MeasureId,
     name: t("KPI dashboard and A/B testing routine", "KPI-Dashboard und A/B-Test-Routine"),
     what: t("One dashboard with conversion, customer value and engagement, and a routine that tests every new measure against a control group.", "Ein Dashboard mit Conversion, Kundenwert und Engagement, und eine Routine, die jede neue Maßnahme gegen eine Kontrollgruppe testet."),
+    scene: t("At the monthly meeting the dashboard shows, for each new measure, the conversion of the group that got it next to the group that did not.", "In der Monatsrunde zeigt das Dashboard für jede neue Maßnahme die Conversion der Gruppe, die sie bekam, neben der Gruppe, die sie nicht bekam."),
+    who: t("A data analyst builds the dashboard; every measure owner must name a KPI and a control group before a launch.", "Ein Datenanalyst baut das Dashboard; jeder Maßnahmen-Owner muss vor einem Start einen KPI und eine Kontrollgruppe nennen."),
+    area: "meas" as MeasureArea,
     basis: t("Measured by: every other measure's KPI against its control group; its own KPI is the share of measures that have one.", "Gemessen durch: den KPI jeder anderen Maßnahme gegen ihre Kontrollgruppe; der eigene KPI ist der Anteil der Maßnahmen, die eine haben."),
     evidence: "controlled" as Evidence,
     cost: 35000,
@@ -89,6 +122,9 @@ export const MEASURES: Measure[] = bi([
     id: "chatbot" as MeasureId,
     name: t("Chatbot for first contact and support", "Chatbot für Erstkontakt und Support"),
     what: t("Answers routine questions at any hour and hands the rest to a person.", "Beantwortet Routinefragen zu jeder Uhrzeit und übergibt den Rest an einen Menschen."),
+    scene: t("At 10 p.m. a customer cannot reset a password; the bot answers within a minute and, when the question is about a contract, hands the chat to a person next morning.", "Um 22 Uhr kann ein Kunde sein Passwort nicht zurücksetzen; der Bot antwortet innerhalb einer Minute und übergibt die Frage am nächsten Morgen an einen Menschen, wenn es um einen Vertrag geht."),
+    who: t("Support writes the answers; the bot talks to customers; support agents take over whatever it hands off.", "Der Support schreibt die Antworten; der Bot spricht mit den Kunden; Support-Mitarbeiter übernehmen, was er übergibt."),
+    area: "auto" as MeasureArea,
     basis: t("Measured by: share of questions solved without a person, compared with the months before.", "Gemessen durch: Anteil der ohne Menschen gelösten Fragen, verglichen mit den Monaten davor."),
     evidence: "before" as Evidence,
     cost: 40000,
@@ -101,6 +137,9 @@ export const MEASURES: Measure[] = bi([
     id: "pricing" as MeasureId,
     name: t("Dynamic pricing in the web shop", "Dynamic Pricing im Webshop"),
     what: t("Prices of add-ons change with demand, order size and season.", "Preise der Add-ons ändern sich mit Nachfrage, Bestellmenge und Saison."),
+    scene: t("A customer ordering 50 licences in December sees a different price from one ordering five in July, and may compare invoices.", "Ein Kunde, der im Dezember 50 Lizenzen bestellt, sieht einen anderen Preis als einer, der im Juli fünf bestellt, und vergleicht vielleicht die Rechnungen."),
+    who: t("Sales sets the price band; the web shop's system sets the price inside it at the moment of the order.", "Der Vertrieb legt die Preisspanne fest; das System des Webshops setzt den Preis darin im Moment der Bestellung."),
+    area: "auto" as MeasureArea,
     basis: t("Measured by: revenue per order before and after the change.", "Gemessen durch: Umsatz pro Bestellung vor und nach der Änderung."),
     evidence: "before" as Evidence,
     cost: 50000,
@@ -113,6 +152,9 @@ export const MEASURES: Measure[] = bi([
     id: "roles" as MeasureId,
     name: t("Three newsletter versions by role", "Drei Newsletter-Versionen nach Rolle"),
     what: t("Admins, managers and finance each get their own version of the monthly newsletter.", "Admins, Führungskräfte und Finanzen bekommen jeweils ihre eigene Version des monatlichen Newsletters."),
+    scene: t("The finance director gets a newsletter about invoices and licence costs; the admin gets one about new features.", "Die Finanzleiterin bekommt einen Newsletter zu Rechnungen und Lizenzkosten; der Admin einen zu neuen Funktionen."),
+    who: t("Marketing writes three texts and sorts the mailing list by role; the customer notices a more fitting newsletter, nothing else changes.", "Das Marketing schreibt drei Texte und sortiert die Verteilerliste nach Rolle; der Kunde merkt einen passenderen Newsletter, sonst ändert sich nichts."),
+    area: "comm" as MeasureArea,
     basis: t("Measured by: open rate compared with last year's newsletter.", "Gemessen durch: Öffnungsrate im Vergleich zum Newsletter des letzten Jahres."),
     evidence: "before" as Evidence,
     cost: 15000,
@@ -125,6 +167,9 @@ export const MEASURES: Measure[] = bi([
     id: "suite" as MeasureId,
     name: t("Full AI marketing suite for all channels", "Komplette KI-Marketing-Suite für alle Kanäle"),
     what: t("A platform that personalises every channel automatically; the vendor configures it.", "Eine Plattform, die jeden Kanal automatisch personalisiert; der Anbieter konfiguriert sie."),
+    scene: t("The vendor's consultant configures the platform for e-mail, web and social; AIConnect staff then read reports that nobody there can check.", "Der Berater des Anbieters konfiguriert die Plattform für E-Mail, Web und Social; die Mitarbeiter von AIConnect lesen danach Berichte, die dort niemand prüfen kann."),
+    who: t("The vendor configures and runs it; AIConnect staff read the vendor's own success report.", "Der Anbieter konfiguriert und betreibt sie; die Mitarbeiter von AIConnect lesen den eigenen Erfolgsbericht des Anbieters."),
+    area: "auto" as MeasureArea,
     basis: t("Measured by: the vendor's own success report.", "Gemessen durch: den eigenen Erfolgsbericht des Anbieters."),
     evidence: "none" as Evidence,
     cost: 120000,
@@ -137,6 +182,9 @@ export const MEASURES: Measure[] = bi([
     id: "discount" as MeasureId,
     name: t("10% discount code in every offer e-mail", "10 % Rabattcode in jeder Angebots-E-Mail"),
     what: t("Every offer e-mail carries a code for 10% off the next add-on.", "Jede Angebots-E-Mail enthält einen Code für 10 % Rabatt auf das nächste Add-on."),
+    scene: t("Every offer e-mail in March carries a 10% code, including those to customers who would have bought anyway.", "Jede Angebots-E-Mail im März trägt einen 10-%-Code, auch die an Kunden, die ohnehin gekauft hätten."),
+    who: t("Marketing adds the code to the template; finance pays the discount on every order that uses it.", "Das Marketing fügt den Code in die Vorlage ein; die Finanzabteilung zahlt den Rabatt bei jeder Bestellung, die ihn nutzt."),
+    area: "price" as MeasureArea,
     basis: t("Measured by: orders during the campaign compared with the month before.", "Gemessen durch: Bestellungen während der Kampagne im Vergleich zum Vormonat."),
     evidence: "before" as Evidence,
     cost: 40000,
@@ -149,6 +197,9 @@ export const MEASURES: Measure[] = bi([
     id: "manual" as MeasureId,
     name: t("Account managers write each offer by hand", "Account Manager schreiben jedes Angebot von Hand"),
     what: t("Each account manager personalises the offers for their top 20 customers from experience.", "Jeder Account Manager personalisiert die Angebote für seine Top-20-Kunden aus Erfahrung."),
+    scene: t("An account manager spends a Friday afternoon writing 20 offers by hand for her top customers.", "Eine Account Managerin schreibt an einem Freitagnachmittag 20 Angebote von Hand für ihre Top-Kunden."),
+    who: t("Each account manager writes the offers; nobody else sees how they went, so nothing is measured.", "Jeder Account Manager schreibt die Angebote; niemand sonst sieht, wie sie liefen, also wird nichts gemessen."),
+    area: "comm" as MeasureArea,
     basis: t("Measured by: account managers report how it went.", "Gemessen durch: Account Manager berichten, wie es lief."),
     evidence: "none" as Evidence,
     cost: 25000,

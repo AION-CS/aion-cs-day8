@@ -139,44 +139,13 @@ export const ARCH: ArchItem[] = bi([
   { id: "pricing" as ArchId, name: t("Dynamic pricing engine", "Dynamic-Pricing-Engine"), what: t("Prices for add-ons that change with demand and order size.", "Preise für Add-ons, die sich mit Nachfrage und Bestellmenge ändern."), cost: 50000, weeks: 10, blackBox: false },
 ]);
 export const ARCH_BY_ID = Object.fromEntries(ARCH.map((a) => [a.id, a])) as Record<ArchId, ArchItem>;
-export const BASELINE_ITEM: ArchId = "foundation";
-
-export type OwnerId = "cdo" | "datalead" | "cslead" | "saleslead" | "it";
-export const OWNER_IDS: OwnerId[] = ["cdo", "datalead", "cslead", "saleslead", "it"];
-export const OWNERS = bi({
-  cdo: { name: t("Chief Digital Officer (you)", "Chief Digital Officer (Sie)"), profile: t("Decides across teams and answers to the board. Should hold few items.", "Entscheidet über Teams hinweg und berichtet an den Vorstand. Sollte wenige Punkte halten.") },
-  datalead: { name: t("Head of Data & Analytics", "Leitung Data & Analytics"), profile: t("Owns the data, the models, the KPIs and their definitions, and the test routine.", "Verantwortet die Daten, die Modelle, die KPIs und ihre Definitionen sowie die Test-Routine.") },
-  cslead: { name: t("Head of Marketing", "Marketingleitung"), profile: t("Owns the e-mails, the newsletter, the offers and the portal content.", "Verantwortet die E-Mails, den Newsletter, die Angebote und die Portalinhalte.") },
-  saleslead: { name: t("Head of Sales", "Vertriebsleitung"), profile: t("Leads the account managers and decides how they plan and sell to their accounts.", "Führt die Account Manager und entscheidet, wie sie ihre Accounts planen und verkaufen.") },
-  it: { name: t("Head of IT", "IT-Leitung"), profile: t("Owns the systems, the interfaces between them and data protection in them.", "Verantwortet die Systeme, die Schnittstellen dazwischen und den Datenschutz darin.") },
-});
-export const OWNER_ACCEPT: Record<ArchId, OwnerId[]> = {
-  foundation: ["datalead", "it"],
-  reco: ["datalead"],
-  trigger: ["cslead"],
-  abtest: ["datalead"],
-  training: ["saleslead", "cdo"],
-  quality: ["datalead", "it"],
-  suite: ["cdo", "cslead"],
-  pricing: ["saleslead", "cdo"],
-};
-export const MODEL_ARCH: ArchId[] = ["foundation", "reco", "trigger", "abtest", "training", "quality"];
-export const MODEL_START: Partial<Record<ArchId, number>> = { foundation: 1, quality: 1, abtest: 2, reco: 2, trigger: 3, training: 3 };
-export const MODEL_TRIGGER = bi({
-  foundation: t("If the three KPIs are not defined and filled from the shop and the CRM for every customer by month 2, the recommendation engine waits and the gaps are closed first.", "Sind die drei KPIs bis Monat 2 nicht definiert und aus Shop und CRM für jeden Kunden gefüllt, wartet die Recommendation Engine, und zuerst werden die Lücken geschlossen."),
-  reco: t("If the conversion rate of the recommended offer is not at least 1.2 times the control group's on 100 orders per group by month 4, the Head of Data retrains the model before any wider rollout.", "Liegt die Conversion Rate des empfohlenen Angebots bis Monat 4 bei 100 Bestellungen pro Gruppe nicht bei mindestens dem 1,2-Fachen der Kontrollgruppe, trainiert die Leitung Data das Modell neu, bevor weiter ausgerollt wird."),
-  trigger: t("If the unsubscribe rate rises above 0.5% in any month, marketing pauses the trigger with the most unsubscribes.", "Steigt die Abmelderate in einem Monat über 0,5 %, pausiert das Marketing den Trigger mit den meisten Abmeldungen."),
-  abtest: t("If fewer than 80% of new measures run against a control group by month 4, no measure is scaled until it has one.", "Laufen bis Monat 4 weniger als 80 % der neuen Maßnahmen gegen eine Kontrollgruppe, wird keine Maßnahme skaliert, bis sie eine hat."),
-  training: t("If fewer than 70% of account managers read the dashboard in their weekly planning by month 5, the training moves into their team meetings.", "Lesen bis Monat 5 weniger als 70 % der Account Manager das Dashboard in ihrer Wochenplanung, wandert die Schulung in ihre Teammeetings."),
-  quality: t("If the knowledge base is still less than 80% complete by month 5, the chatbot pilot moves to the next half-year.", "Ist die Wissensbasis bis Monat 5 immer noch zu weniger als 80 % vollständig, rückt der Chatbot-Pilot ins nächste Halbjahr."),
-});
 
 /* ------------------------------------------------------------------ 3.6 · a technology decision despite an unclear success forecast */
 
 export type DecisionId = "commit" | "stage" | "wait";
 export const DECISIONS = bi([
   { id: "commit" as DecisionId, label: t("Buy the full AI suite now", "Die komplette KI-Suite jetzt kaufen"), detail: t("License the vendor's platform for every channel from month 1 and let it personalise everything.", "Die Plattform des Anbieters ab Monat 1 für jeden Kanal lizenzieren und alles personalisieren lassen."), why: t("Fast and complete, and it defends only if the vendor's forecast holds for AIConnect's customers.", "Schnell und vollständig, und nur vertretbar, wenn die Prognose des Anbieters für die Kunden von AIConnect zutrifft."), rejected: t("Most of the budget is spent on a system whose effect nobody at AIConnect can measure or explain.", "Der Großteil des Budgets geht in ein System, dessen Wirkung bei AIConnect niemand messen oder erklären kann.") },
-  { id: "stage" as DecisionId, label: t("Decide now, build in stages, with a tripwire", "Jetzt entscheiden, stufenweise bauen, mit Tripwire"), detail: t("Start with the KPI system and the recommendation engine on the data that is ready, add the triggers from month 3, and scale only if the tripwire is met.", "Mit KPI-System und Recommendation Engine auf den bereiten Daten starten, ab Monat 3 die Trigger ergänzen, und nur skalieren, wenn der Tripwire erreicht ist."), why: t("It makes the technology decision the brief asks for, with the one technology that has a pilot behind it, and measures before it scales.", "Es trifft die Technologieentscheidung, die der Auftrag verlangt, mit der einen Technologie, hinter der ein Pilot steht, und misst, bevor es skaliert."), rejected: t("", "") },
+  { id: "stage" as DecisionId, label: t("Decide now, build in stages, and watch one figure", "Jetzt entscheiden, stufenweise bauen, und eine Zahl beobachten"), detail: t("Start with the KPI system and the A/B routine, then the engines on the data that is ready, and scale only if the figure you watch moves.", "Mit KPI-System und A/B-Routine starten, dann die Engines auf den bereiten Daten, und nur skalieren, wenn sich die Zahl bewegt, die Sie beobachten."), why: t("It makes the technology decision the brief asks for, with the one technology that has a pilot behind it, and measures before it scales.", "Es trifft die Technologieentscheidung, die der Auftrag verlangt, mit der einen Technologie, hinter der ein Pilot steht, und misst, bevor es skaliert."), rejected: t("", "") },
   { id: "wait" as DecisionId, label: t("Wait until the success forecast is clear", "Warten, bis die Erfolgsprognose klar ist"), detail: t("Run more studies for six months before any technology is chosen.", "Sechs Monate weitere Studien durchführen, bevor irgendeine Technologie gewählt wird."), why: t("", ""), rejected: t("The brief asks for a decision despite an unclear forecast. Waiting keeps the impersonal standard communication for six more months, and no study makes the forecast clear without a test.", "Der Auftrag verlangt eine Entscheidung trotz unklarer Prognose. Warten behält die unpersönliche Standardkommunikation sechs weitere Monate bei, und keine Studie macht die Prognose ohne Test klar.") },
 ]);
 export const MODEL_DECISION: DecisionId = "stage";
@@ -190,11 +159,3 @@ export const KPIS = bi([
   { id: "emails" as KpiId, label: t("E-mails sent per month", "Versendete E-Mails pro Monat"), unit: t("e-mails", "E-Mails"), baseline: 60000, better: "up" as const, behaviour: false },
 ]);
 export const KPI_BY_ID = Object.fromEntries(KPIS.map((k) => [k.id, k])) as Record<KpiId, (typeof KPIS)[number]>;
-export const MODEL_TRIPWIRE = { kpi: "conv" as KpiId, threshold: 4, month: 5 };
-export const R2_BASELINE_NOTE = bi({ v: t("Baselines are Case assumptions from AIConnect's shop, CRM and portal data of the last twelve months.", "Die Ausgangswerte sind Fallannahmen aus den Shop-, CRM- und Portaldaten von AIConnect der letzten zwölf Monate.") });
-export const BOARD_CHALLENGE = bi({
-  v: t(
-    "It is month 3. The recommendation engine has raised the conversion rate from 3.0% to 3.4%, less than the pilot's 4.8%. The unsubscribe rate rose from 0.3% to 0.5%. The Head of Sales wants to buy the full AI suite instead; the finance director wants to stop the programme. The board asks what you do.",
-    "Es ist Monat 3. Die Recommendation Engine hat die Conversion Rate von 3,0 % auf 3,4 % gehoben, weniger als die 4,8 % des Piloten. Die Abmelderate stieg von 0,3 % auf 0,5 %. Die Vertriebsleitung will stattdessen die komplette KI-Suite kaufen; die Finanzleitung will das Programm stoppen. Der Vorstand fragt, was Sie tun.",
-  ),
-});

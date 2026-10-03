@@ -6,9 +6,10 @@ import { AB_MODEL, MEANING_TRUTH, MEASURE_TRUTH, PATTERN_IDS, RECORDS, TRUTH_COU
 import type { PatternId, PatternRow, RecId, UncId } from "@/data/patterns";
 import { MEASURE_BY_ID, MODEL_MEASURES, explainBucket } from "@/data/measures";
 import type { MeasureId, ProblemId } from "@/data/measures";
-import { COMP_BY_ID, MODEL_ARCH, MODEL_COMPS, MODEL_GREATEST, MODEL_START, MODEL_TRIGGER, MODEL_TRIPWIRE, OWNER_ACCEPT, OWNER_ACCEPT_LOGIC, SITUATIONS, SOURCES, actionOf, useOf } from "@/data/route2";
-import type { Criterion, LogicRow, OwnerId, Use } from "@/data/route2";
-import { euro, num, tt } from "@/lib/lang";
+import { COMP_BY_ID, MODEL_COMPS, MODEL_GREATEST, OWNER_ACCEPT_LOGIC, SITUATIONS, SOURCES, actionOf, useOf } from "@/data/route2";
+import type { Criterion, LogicRow, Use } from "@/data/route2";
+import { MODEL_TIER } from "@/data/route2Panel";
+import { num, tt } from "@/lib/lang";
 import type { L1State, R2State, Score } from "@/store/useStore";
 
 /**
@@ -19,6 +20,25 @@ import type { L1State, R2State, Score } from "@/store/useStore";
 export const MENTOR_PASSCODE = "muchson123";
 export const MODEL_ORDER: MeasureId[] = ["reco", "kpi", "trigger"];
 
+/** The model reason for the two judged scores of each model measure (CLAUDE.md #45): effect, scalability, and a printed fact. */
+const MEASURE_REASON: Record<string, () => string> = {
+  reco: () =>
+    tt(
+      "Effect 3: it changes what every customer sees, the add-on that similar firms bought, and its effect can be proven against a control group. Scalability 3: once built it serves every customer at no extra cost, in the 8 weeks printed on the card.",
+      "Wirkung 3: Sie ändert, was jeder Kunde sieht, nämlich das Add-on, das ähnliche Firmen kauften, und ihre Wirkung lässt sich gegen eine Kontrollgruppe belegen. Skalierbarkeit 3: Einmal gebaut, dient sie jedem Kunden ohne Zusatzkosten, in den 8 Wochen, die auf der Karte stehen.",
+    ),
+  trigger: () =>
+    tt(
+      "Effect 2: it makes the contact personal, but its effect on orders is smaller than a recommendation's. Scalability 3: once the triggers exist the system sends them to every customer, and the card says 6 weeks.",
+      "Wirkung 2: Sie macht den Kontakt persönlich, aber ihre Wirkung auf Bestellungen ist kleiner als die einer Empfehlung. Skalierbarkeit 3: Sobald die Trigger existieren, sendet das System sie an jeden Kunden, und die Karte nennt 6 Wochen.",
+    ),
+  kpi: () =>
+    tt(
+      "Effect 2: it raises no sale by itself, but without it no other measure can be proven or improved. Scalability 3: one dashboard and one routine serve every future measure, for 6 weeks of work.",
+      "Wirkung 2: Sie steigert selbst keinen Verkauf, aber ohne sie lässt sich keine andere Maßnahme belegen oder verbessern. Skalierbarkeit 3: Ein Dashboard und eine Routine dienen jeder künftigen Maßnahme, für 6 Wochen Arbeit.",
+    ),
+};
+
 export function KEY_L1(): Partial<L1State> {
   return {
     sort: Object.fromEntries(LINES.map((r) => [r.id, r.truth])) as Record<LineId, LevelTag>,
@@ -26,10 +46,9 @@ export function KEY_L1(): Partial<L1State> {
       "Customers who add users but never open the admin settings are new admins, so AIConnect could send them the admin training offer and a short setup guide instead of the general newsletter.",
       "Kunden, die Nutzer hinzufügen, aber nie die Admin-Einstellungen öffnen, sind neue Admins, also könnte AIConnect ihnen das Angebot für die Admin-Schulung und eine kurze Einrichtungsanleitung schicken statt des allgemeinen Newsletters.",
     ),
-    fig: { F1: String(FORECAST.f1), F2: String(FORECAST.f2), F3: String(FORECAST.f3) },
     meaning: tt(
-      `The personalised offer converted ${FORECAST.f1}% against ${FORECAST.controlRate}%, ${FORECAST.f2} times the standard rate. Across ${num(PILOT.yearly)} offer e-mails that would be about ${euro(FORECAST.f3)} a year, so AIConnect should run a larger second test before rolling it out, because ${PILOT.control.orders} and ${PILOT.variant.orders} orders are still a small base.`,
-      `Das personalisierte Angebot konvertierte mit ${num(FORECAST.f1)} % gegenüber ${num(FORECAST.controlRate)} %, das ${num(FORECAST.f2)}-Fache der Standardrate. Über ${num(PILOT.yearly)} Angebots-E-Mails wären das etwa ${euro(FORECAST.f3)} pro Jahr, also sollte AIConnect vor dem Rollout einen größeren zweiten Test fahren, weil ${PILOT.control.orders} und ${PILOT.variant.orders} Bestellungen noch eine kleine Basis sind.`,
+      `The personalised offer converted ${FORECAST.f1}% against ${FORECAST.controlRate}%, ${FORECAST.f2} times the standard rate, so it looks promising, but AIConnect should run a larger second test before rolling it out, because ${PILOT.control.orders} and ${PILOT.variant.orders} orders are still a small base.`,
+      `Das personalisierte Angebot konvertierte mit ${num(FORECAST.f1)} % gegenüber ${num(FORECAST.controlRate)} %, das ${num(FORECAST.f2)}-Fache der Standardrate, es sieht also vielversprechend aus, aber AIConnect sollte vor dem Rollout einen größeren zweiten Test fahren, weil ${PILOT.control.orders} und ${PILOT.variant.orders} Bestellungen noch eine kleine Basis sind.`,
     ),
     valuable: [...VALUABLE_TRUTH],
     churners: [...CHURN_TRUTH],
@@ -60,10 +79,11 @@ export function KEY_L1(): Partial<L1State> {
     exp: Object.fromEntries(MODEL_MEASURES.map((id) => [id, explainBucket(MEASURE_BY_ID[id].evidence)])) as Record<string, Score>,
     fea: Object.fromEntries(MODEL_MEASURES.map((id) => [id, MEASURE_BY_ID[id].model.feasibility])) as Record<string, Score>,
     eff: Object.fromEntries(MODEL_MEASURES.map((id) => [id, MEASURE_BY_ID[id].model.effect])) as Record<string, Score>,
+    reasons: Object.fromEntries(MODEL_MEASURES.map((id) => [id, MEASURE_REASON[id]()])) as Record<string, string>,
     order: [...MODEL_ORDER],
     why: tt(
-      "The recommendation engine goes first: it scores 27, answers both impersonal communication and low conversion, and the pilot showed 1.6 times the standard rate, worth about €388,800 a year. The KPI dashboard and testing routine comes second and starts alongside it, so the engine is measured from its first week. The triggered e-mails come third. The three cost €125,000 of the €200,000; the chatbot and dynamic pricing wait, because they answer none of the problems or cannot yet be measured.",
-      "Die Recommendation Engine kommt zuerst: Sie erzielt 27, beantwortet unpersönliche Kommunikation und niedrige Conversion, und der Pilot zeigte das 1,6-Fache der Standardrate, etwa 388.800 € pro Jahr. Das KPI-Dashboard mit Test-Routine kommt als Zweites und startet gleichzeitig, damit die Engine ab ihrer ersten Woche gemessen wird. Die Trigger-E-Mails kommen als Drittes. Die drei kosten 125.000 € von 200.000 €; Chatbot und Dynamic Pricing warten, weil sie keines der Probleme beantworten oder noch nicht messbar sind.",
+      "The recommendation engine goes first: it scores 27, answers both impersonal communication and low conversion, and the pilot in the brief showed 1.6 times the standard rate. The KPI dashboard and testing routine comes second and starts alongside it, so the engine is measured from its first week. The triggered e-mails come third. The three cost €125,000 of the €200,000; the chatbot and dynamic pricing wait, because they answer none of the problems or cannot yet be measured.",
+      "Die Recommendation Engine kommt zuerst: Sie erzielt 27, beantwortet unpersönliche Kommunikation und niedrige Conversion, und der Pilot im Auftrag zeigte das 1,6-Fache der Standardrate. Das KPI-Dashboard mit Test-Routine kommt als Zweites und startet gleichzeitig, damit die Engine ab ihrer ersten Woche gemessen wird. Die Trigger-E-Mails kommen als Drittes. Die drei kosten 125.000 € von 200.000 €; Chatbot und Dynamic Pricing warten, weil sie keines der Probleme beantworten oder noch nicht messbar sind.",
     ),
   };
 }
@@ -89,31 +109,23 @@ export function KEY_R2(): Partial<R2State> {
       "Die Conversion Rate der Angebote ist das Ergebnis, das der Auftrag als niedrig nennt. Sie ist mit dem Wert verbunden und wird wöchentlich für jeden Kunden von den Systemen gezählt, sodass jede Technologie innerhalb von Wochen daran gemessen werden kann.",
     ),
     logic,
-    alloc: Object.fromEntries(MODEL_ARCH.map((id) => [id, true])),
-    start: { ...MODEL_START } as Record<string, number>,
-    owner: Object.fromEntries(MODEL_ARCH.map((id) => [id, OWNER_ACCEPT[id][0]])) as Record<string, OwnerId>,
-    trigger: Object.fromEntries(MODEL_ARCH.map((id) => [id, MODEL_TRIGGER[id as keyof typeof MODEL_TRIGGER]])) as Record<string, string>,
-    postponed: tt(
-      "The full AI suite (€90,000) is left out: the six funded items cost €195,000 of the €220,000, the suite would push the plan €65,000 over, and nobody at AIConnect could explain or measure what it does. Dynamic pricing (€50,000) waits, because its price data is only 40% ready.",
-      "Die komplette KI-Suite (90.000 €) bleibt draußen: Die sechs finanzierten Punkte kosten 195.000 € von 220.000 €, die Suite brächte den Plan 65.000 € über das Budget, und niemand bei AIConnect könnte erklären oder messen, was sie tut. Dynamic Pricing (50.000 €) wartet, weil seine Preisdaten erst zu 40 % bereit sind.",
+    tier: { ...MODEL_TIER },
+    vision: tt(
+      "AIConnect steers its customer retention by three KPIs that every team reads from one place, and every new technology has to move one of them before it grows. Customers get offers and e-mails that fit what they do, and the company can show which measure sold more.",
+      "AIConnect steuert seine Kundenbindung über drei KPIs, die jedes Team an einem Ort liest, und jede neue Technologie muss einen davon bewegen, bevor sie wächst. Kunden erhalten Angebote und E-Mails, die zu dem passen, was sie tun, und das Unternehmen kann zeigen, welche Maßnahme mehr verkauft hat.",
     ),
-    pickup: tt(
-      "If the conversion rate of the recommended offer reaches 4% by month 5, we pilot dynamic pricing on one product in month 6.",
-      "Erreicht die Conversion Rate des empfohlenen Angebots bis Monat 5 4 %, pilotieren wir in Monat 6 Dynamic Pricing an einem Produkt.",
+    giveUp: tt(
+      "The plan gives me one KPI system, a control group for every measure, and two engines that are measured on data that is ready. It costs me dynamic pricing, whose data is only 40% ready, and the full AI suite, which nobody could explain or measure. €25,000 stay unspent. If the data turns out weaker, the recommendation engine rests on data below 80%, so I watch it first.",
+      "Der Plan gibt mir ein KPI-System, eine Kontrollgruppe für jede Maßnahme und zwei Engines, die auf bereiten Daten gemessen werden. Er kostet mich Dynamic Pricing, dessen Daten erst zu 40 % bereit sind, und die komplette KI-Suite, die niemand erklären oder messen könnte. 25.000 € bleiben ungenutzt. Fallen die Daten schwächer aus, beruht die Recommendation Engine auf Daten unter 80 %, also beobachte ich sie zuerst.",
     ),
     decision: "stage",
-    assumptions: [
-      tt("The pilot's uplift holds for all customers, not only the pilot list. This is wrong if the second run shows less than 1.2 times the control rate on 100 orders per group by month 4.", "Der Uplift des Piloten gilt für alle Kunden, nicht nur für die Pilotliste. Das ist falsch, wenn der zweite Durchlauf bis Monat 4 bei 100 Bestellungen pro Gruppe weniger als das 1,2-Fache der Kontrollrate zeigt."),
-      tt("Customers accept more personal e-mails. This is wrong if the unsubscribe rate rises above 0.5% in any month.", "Kunden akzeptieren persönlichere E-Mails. Das ist falsch, wenn die Abmelderate in einem Monat über 0,5 % steigt."),
-      tt("Shop, CRM and portal data can be joined for almost every customer. This is wrong if fewer than 95% of active customers have all three KPIs filled by month 2.", "Shop-, CRM- und Portaldaten lassen sich für fast jeden Kunden verbinden. Das ist falsch, wenn bis Monat 2 weniger als 95 % der aktiven Kunden alle drei KPIs gefüllt haben."),
-    ],
-    tripKpi: MODEL_TRIPWIRE.kpi,
-    tripThreshold: String(MODEL_TRIPWIRE.threshold),
-    tripMonth: MODEL_TRIPWIRE.month,
-    tripAction: "adjust",
-    challenge: tt(
-      "I keep the programme and change one thing. 3.0% to 3.4% is an uplift of about 13% and the engine is still learning, so I check it against the control group on 100 orders per group before judging it. The rise in unsubscribes crosses our guardrail, so marketing pauses the trigger with the most unsubscribes this month. Buying the suite would replace a measured tool with one nobody can measure, and stopping would throw away the only measured gain. The tripwire at 4% in month 5 decides.",
-      "Ich behalte das Programm und ändere eine Sache. 3,0 % zu 3,4 % ist ein Uplift von etwa 13 %, und die Engine lernt noch, also prüfe ich sie bei 100 Bestellungen pro Gruppe gegen die Kontrollgruppe, bevor ich urteile. Der Anstieg der Abmeldungen überschreitet unsere Guardrail, also pausiert das Marketing in diesem Monat den Trigger mit den meisten Abmeldungen. Die Suite zu kaufen hieße, ein gemessenes Werkzeug durch eines zu ersetzen, das niemand messen kann, und Stoppen würde den einzigen gemessenen Gewinn wegwerfen. Der Tripwire bei 4 % in Monat 5 entscheidet.",
+    decisionWhy: tt(
+      "It makes the technology decision the brief asks for, with the engines that have a pilot behind them, and measures before it scales. The KPI system and the A/B routine start in month 1, so every engine is measured from its first week, and the suite stays out because nobody could explain it.",
+      "Es trifft die Technologieentscheidung, die der Auftrag verlangt, mit den Engines, hinter denen ein Pilot steht, und misst, bevor es skaliert. KPI-System und A/B-Routine starten in Monat 1, damit jede Engine ab ihrer ersten Woche gemessen wird, und die Suite bleibt draußen, weil niemand sie erklären könnte.",
+    ),
+    watch: tt(
+      "I watch the conversion rate of offers: today it is 3%, and if it is not clearly above that by month 4 on enough orders, I stop the recommendation engine's rollout and keep the KPI system and the A/B routine. I also watch the data behind the engine: if it stays below 80%, I pause it until it is cleaned.",
+      "Ich beobachte die Conversion Rate der Angebote: Heute liegt sie bei 3 %, und liegt sie bis Monat 4 bei genug Bestellungen nicht deutlich darüber, stoppe ich den Rollout der Recommendation Engine und behalte KPI-System und A/B-Routine. Ich beobachte auch die Daten hinter der Engine: Bleiben sie unter 80 %, pausiere ich sie, bis sie bereinigt sind.",
     ),
   };
 }

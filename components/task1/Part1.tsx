@@ -3,26 +3,24 @@
 import clsx from "clsx";
 import { AnswerBlock } from "@/components/ui/AnswerBlock";
 import { AnswerKey } from "@/components/ui/AnswerKey";
-import { CalcDiagnosis } from "@/components/ui/CalcDiagnosis";
-import { Field } from "@/components/ui/Field";
-import { FormulaBuilder } from "@/components/ui/FormulaBuilder";
+import { BlockMissing } from "@/components/ui/BlockMissing";
+import { ExampleAnswer } from "@/components/ui/ExampleAnswer";
 import { CheckBar, OptionList, Reading, TextBox } from "@/components/ui/Inputs";
 import { MaterialRefs } from "@/components/ui/MaterialRefs";
 import { MentorGuide } from "@/components/ui/MentorGuide";
 import { PlacementBoard } from "@/components/ui/PlacementBoard";
 import { RevealHint } from "@/components/ui/RevealHint";
 import { WritingHelp } from "@/components/ui/WritingHelp";
-import { LEVEL_TAGS, LEVEL_TESTS, LINES } from "@/data/ladder";
+import { LEVEL_TAGS, LEVEL_TESTS, LINES, LINE_KEY } from "@/data/ladder";
 import type { LevelTag, LineId } from "@/data/ladder";
-import { AUTO_MIN_VOLUME, BASES, BASIS_LABEL, CUSTOMERS, FIGURES, FIGURE_IDS, INSIGHT_COUNT, INSIGHT_FRAME, INSIGHT_MIN, PICK, PILOT, ROUTINE_LABEL, STAKES_LABEL } from "@/data/forecast";
-import type { Basis, CustId, FigureId } from "@/data/forecast";
-import { FIGURE_BUILDERS, figAnswer, figurePartFlags, partKey } from "@/lib/calcBuilder";
-import { citesForecastFigure, figMatches, insightFlags, pickHolds, sortHolds } from "@/lib/checks";
+import { AUTO_MIN_VOLUME, BASES, BASIS_LABEL, CUSTOMERS, FORECAST, INSIGHT_COUNT, INSIGHT_FRAME, INSIGHT_MIN, PICK, PILOT, ROUTINE_LABEL, STAKES_LABEL } from "@/data/forecast";
+import type { Basis, CustId } from "@/data/forecast";
+import { citesForecastFigure, insightFlags, pickHolds, sortHolds } from "@/lib/checks";
 import { scrollToAndFlash } from "@/lib/flash";
 import { Gloss } from "@/lib/glossify";
 import { IDS } from "@/lib/missing";
-import { euro, num, tt } from "@/lib/lang";
-import { extraInsightGuide, figureGuide, insightGuide, meaningGuide, reflectGuide } from "@/lib/mentorGuide";
+import { num, tt } from "@/lib/lang";
+import { extraInsightGuide, insightGuide, meaningGuide, reflectGuide } from "@/lib/mentorGuide";
 import { pickKey, sortKey } from "@/lib/answerKey";
 import { MIN_LINE, MIN_SENTENCE } from "@/lib/progress";
 import { BLOCK_MINUTES } from "@/lib/routes";
@@ -42,6 +40,7 @@ export function Block11() {
       id="block-1-1"
       title={tt("Block 1.1 · Recommendation, communication or automation?", "Block 1.1 · Empfehlung, Kommunikation oder Automatisierung?")}
       kind="OBJECTIVE"
+      core
       minutes={BLOCK_MINUTES["1.1"]}
       findIt={tt("Route 1 → Task 1 → the nine ideas on the sort board below, from AIConnect's marketing, sales, service and product teams. Answer on the sort board.", "Route 1 → Task 1 → die neun Ideen auf der Sortiertafel unten, aus Marketing, Vertrieb, Service und Produkt von AIConnect. Antworten Sie auf der Sortiertafel.")}
     >
@@ -56,6 +55,7 @@ export function Block11() {
         undoCount={l1.sortHistory.length}
         redoCount={l1.sortFuture.length}
         domId={IDS.line}
+        keyPhrases={LINE_KEY}
         clues={Object.fromEntries(LINES.map((r) => [r.id, r.clue]))}
         reasons={Object.fromEntries(LINES.map((r) => [r.id, r.why]))}
         result={l1.sortResult}
@@ -92,19 +92,39 @@ export function Block11() {
         onChange={(v) => patch({ extraInsight: v })}
         min={MIN_LINE}
         rows={2}
-      />
+      >
+        <WritingHelp
+          id="extra-insight-kit"
+          refs={[
+            { label: tt("What AIConnect's data covers (the case)", "Was die Daten von AIConnect abdecken (der Fall)"), value: tt("every order, every login, every opened e-mail", "jede Bestellung, jedes Login, jede geöffnete E-Mail"), target: "case-brief" },
+            { label: tt("The three things you can personalise (Materi A2)", "Die drei Dinge, die Sie personalisieren können (Materi A2)"), value: tt("the product suggested · what we say, when, on which channel · who does the work", "das vorgeschlagene Produkt · was wir sagen, wann, auf welchem Kanal · wer die Arbeit macht"), target: "mat-A2" },
+            { label: tt("The nine ideas above", "Die neun Ideen oben"), value: tt("see how the teams already describe a group and what they would tailor", "sehen Sie, wie die Teams eine Gruppe schon beschreiben und was sie zuschneiden würden"), target: IDS.line(LINES[0].id) },
+          ]}
+          steps={[
+            tt("Name a group of customers, not all customers (for example, firms that just added users).", "Nennen Sie eine Gruppe von Kunden, nicht alle Kunden (zum Beispiel Firmen, die gerade Nutzer hinzugefügt haben)."),
+            tt("Say what AIConnect's data shows about that group.", "Sagen Sie, was die Daten von AIConnect über diese Gruppe zeigen."),
+            tt("Finish with “so …”: what AIConnect would personalise for them (the product, the message, its timing or its channel).", "Schließen Sie mit „also …“: was AIConnect für sie personalisieren würde (das Produkt, die Nachricht, ihren Zeitpunkt oder ihren Kanal)."),
+          ]}
+        />
+      </TextBox>
+      <ExampleAnswer id="extra-insight-example" guide={extraInsightGuide()} />
       {mentor && <MentorGuide guide={extraInsightGuide()} />}
       <AnswerKey block={sortKey()} />
+      <BlockMissing block="1.1" route={1} />
     </AnswerBlock>
   );
 }
 
-/* ------------------------------------------------------------------ Block 1.2 */
+/* ------------------------------------------------------------------ Block 1.2 (Optional, read-only) */
 
-const row = (id: string, label: string, value: string) => (
+const row = (id: string, cells: string[]) => (
   <tr id={id} className="border-t border-line">
-    <td className="px-3 py-2">{label}</td>
-    <td className="tnum px-3 py-2 text-right font-semibold">{value}</td>
+    <td className="px-3 py-2 font-semibold">{cells[0]}</td>
+    {cells.slice(1).map((c, i) => (
+      <td key={i} className="tnum px-3 py-2 text-right">
+        {c}
+      </td>
+    ))}
   </tr>
 );
 
@@ -112,161 +132,95 @@ export function Block12() {
   const l1 = useStore((s) => s.l1);
   const patch = useStore((s) => s.patchL1);
   const mentor = useStore((s) => s.mentorUnlocked);
-  const setFig = (id: FigureId, v: string) => patch((s) => ({ fig: { ...s.fig, [id]: v }, figFlagged: s.figFlagged.filter((f) => f !== id), meaningFlagged: false }));
   const check = () =>
     patch((s) => {
-      const figFlagged = FIGURE_IDS.filter((id) => s.fig[id].trim() !== "" && !figMatches(s.fig[id], figAnswer(id)));
       const w = s.meaning.trim();
-      return { checks: s.checks + 1, figFlagged, figClue: {}, partFlags: figurePartFlags(s.parts), meaningFlagged: w !== "" && (w.length < MIN_SENTENCE || !citesForecastFigure(w)), meaningClue: false };
+      return { checks: s.checks + 1, meaningFlagged: w !== "" && (w.length < MIN_SENTENCE || !citesForecastFigure(w)), meaningClue: false };
     });
+  const pct = (v: number) => `${num(v, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %`;
   return (
     <AnswerBlock
       id="block-1-2"
-      title={tt("Block 1.2 · Read the pilot: three KPI figures", "Block 1.2 · Den Pilot lesen: drei KPI-Werte")}
-      kind="OBJECTIVE + JUDGED"
+      title={tt("Block 1.2 · Read the pilot: two rates side by side", "Block 1.2 · Den Pilot lesen: zwei Raten nebeneinander")}
+      kind="JUDGED"
+      core={false}
       minutes={BLOCK_MINUTES["1.2"]}
-      findIt={tt("Route 1 → Task 1 → the three tables “Pilot last quarter”, “Next year” and “All orders” directly below. Answer in the fields under the tables.", "Route 1 → Task 1 → die drei Tabellen „Pilot im letzten Quartal“, „Nächstes Jahr“ und „Alle Bestellungen“ direkt darunter. Antworten Sie in den Feldern unter den Tabellen.")}
+      findIt={tt("Route 1 → Task 1 → the table “Pilot last quarter” directly below, with the two rates the app prints. Answer in the field under the table.", "Route 1 → Task 1 → die Tabelle „Pilot im letzten Quartal“ direkt darunter, mit den zwei Raten, die die App druckt. Antworten Sie im Feld unter der Tabelle.")}
     >
       <MaterialRefs refs={["A4"]} />
       <p className="text-body text-ink">
         <Gloss>
           {tt(
-            "Last quarter AIConnect ran a pilot: half of a mailing list got the standard offer e-mail, the other half an offer chosen by a recommendation system. The numbers you need are in the tables below. Look for them first; the buttons “Show where the numbers are” and “Show the formula” are there if you get stuck. The method is taught in",
-            "Im letzten Quartal hat AIConnect einen Pilot durchgeführt: Die eine Hälfte einer Verteilerliste bekam die Standard-Angebots-E-Mail, die andere ein Angebot, das ein Recommendation System ausgewählt hatte. Die Zahlen stehen in den Tabellen unten. Suchen Sie sie zuerst selbst; die Schaltflächen „Zeigen, wo die Zahlen stehen“ und „Formel zeigen“ helfen, wenn Sie nicht weiterkommen. Die Methode steht in",
+            "Last quarter AIConnect ran a pilot: half of a mailing list got the standard offer e-mail, the other half an offer chosen by a recommendation system. The app divides orders by e-mails and prints both rates for you; nothing is left to calculate. Your job is to read them side by side and say what they do and do not tell AIConnect. How such a rate is worked out is shown in",
+            "Im letzten Quartal hat AIConnect einen Pilot durchgeführt: Die eine Hälfte einer Verteilerliste bekam die Standard-Angebots-E-Mail, die andere ein Angebot, das ein Recommendation System ausgewählt hatte. Die App teilt Bestellungen durch E-Mails und druckt beide Raten für Sie; es bleibt nichts zu rechnen. Ihre Aufgabe ist, sie nebeneinander zu lesen und zu sagen, was sie AIConnect sagen und was nicht. Wie eine solche Rate entsteht, zeigt",
           )}
         </Gloss>{" "}
         <button type="button" onClick={() => scrollToAndFlash("mat-A4", "ref")} className="font-semibold text-accent underline decoration-dotted underline-offset-2">
           Materi A4
         </button>
-        {tt(", on other numbers. What you practise is combining them correctly.", ", mit anderen Zahlen. Was Sie üben, ist, sie richtig zu kombinieren.")}
+        .
       </p>
-      <div className="grid gap-3 md:grid-cols-3">
-        <div className="relative overflow-x-auto rounded-lg border border-line md:col-span-2">
-          <table className="w-full border-collapse text-caption">
-            <caption className="bg-mist px-3 py-2 text-left text-micro font-semibold uppercase text-ash">{tt("Pilot last quarter · offer e-mails (Case assumption)", "Pilot im letzten Quartal · Angebots-E-Mails (Fallannahme)")}</caption>
-            <tbody>
-              {row("fc-ctl-sent", tt("Standard offer · e-mails delivered", "Standardangebot · zugestellte E-Mails"), num(PILOT.control.sent))}
-              {row("fc-ctl-orders", tt("Standard offer · orders within 14 days", "Standardangebot · Bestellungen innerhalb von 14 Tagen"), num(PILOT.control.orders))}
-              {row("fc-var-sent", tt("Personalised offer · e-mails delivered", "Personalisiertes Angebot · zugestellte E-Mails"), num(PILOT.variant.sent))}
-              {row("fc-var-orders", tt("Personalised offer · orders within 14 days", "Personalisiertes Angebot · Bestellungen innerhalb von 14 Tagen"), num(PILOT.variant.orders))}
-            </tbody>
-          </table>
-        </div>
-        <div className="space-y-3">
-          <div className="relative overflow-x-auto rounded-lg border border-line">
-            <table className="w-full border-collapse text-caption">
-              <caption className="bg-mist px-3 py-2 text-left text-micro font-semibold uppercase text-ash">{tt("Next year", "Nächstes Jahr")}</caption>
-              <tbody>{row("fc-yearly", tt("Offer e-mails a year", "Angebots-E-Mails pro Jahr"), num(PILOT.yearly))}</tbody>
-            </table>
-          </div>
-          <div className="relative overflow-x-auto rounded-lg border border-line">
-            <table className="w-full border-collapse text-caption">
-              <caption className="bg-mist px-3 py-2 text-left text-micro font-semibold uppercase text-ash">{tt("All orders", "Alle Bestellungen")}</caption>
-              <tbody>{row("fc-order", tt("Average order value", "Durchschnittlicher Bestellwert"), euro(PILOT.order))}</tbody>
-            </table>
-          </div>
-        </div>
+      <div className="relative overflow-x-auto rounded-lg border border-line">
+        <table className="w-full min-w-[30rem] border-collapse text-caption">
+          <caption className="bg-mist px-3 py-2 text-left text-micro font-semibold uppercase text-ash">{tt("Pilot last quarter · offer e-mails (Case assumption)", "Pilot im letzten Quartal · Angebots-E-Mails (Fallannahme)")}</caption>
+          <thead>
+            <tr className="text-left text-micro uppercase text-ash">
+              <th className="px-3 py-2">{tt("Group", "Gruppe")}</th>
+              <th className="px-3 py-2 text-right">{tt("E-mails delivered", "Zugestellte E-Mails")}</th>
+              <th className="px-3 py-2 text-right">{tt("Orders within 14 days", "Bestellungen in 14 Tagen")}</th>
+              <th className="px-3 py-2 text-right">{tt("Conversion rate (printed)", "Conversion Rate (gedruckt)")}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {row("fc-ctl", [tt("Standard offer", "Standardangebot"), num(PILOT.control.sent), num(PILOT.control.orders), pct(FORECAST.controlRate)])}
+            {row("fc-var", [tt("Personalised offer", "Personalisiertes Angebot"), num(PILOT.variant.sent), num(PILOT.variant.orders), pct(FORECAST.f1)])}
+          </tbody>
+        </table>
       </div>
-      <div className="space-y-5">
-        {FIGURE_IDS.map((id) => {
-          const f = FIGURES[id];
-          const b = FIGURE_BUILDERS[id];
-          const flagged = l1.figFlagged.includes(id);
-          const partsFlagged = b.parts.some((p) => l1.partFlags.includes(partKey(id, p.id)));
-          return (
-            <div key={id} className="space-y-2">
-              <Field
-                id={IDS.figure(id)}
-                htmlFor={`fig-${id}-in`}
-                label={f.label}
-                help={tt(`${f.question} Type the figure as a number, for example ${f.example}.`, `${f.question} Tippen Sie den Wert als Zahl, zum Beispiel ${f.example.replace(".", ",")}.`)}
-                flagged={flagged}
-                clue={f.clue}
-                clueShown={!!l1.figClue[id]}
-                onShowClue={() => patch((s) => ({ figClue: { ...s.figClue, [id]: true } }))}
-              >
-                <input id={`fig-${id}-in`} className="field tnum max-w-xs" inputMode="decimal" autoComplete="off" value={l1.fig[id]} onChange={(e) => setFig(id, e.target.value)} aria-invalid={flagged || undefined} />
-              </Field>
-              {flagged && (
-                <CalcDiagnosis
-                  builder={b}
-                  figure={id}
-                  parts={l1.parts}
-                  partFlags={l1.partFlags}
-                  name={tt(`your ${id}`, `Ihr ${id}`)}
-                  mismatch={(r) => tt(`The parts in the formula calculator are right and give ${r}, but the figure you entered differs. Press “Use this result in ${id}” or check the entry.`, `Die Teile im Formelrechner stimmen und ergeben ${r}, aber Ihr eingetragener Wert weicht ab. Drücken Sie „Ergebnis übernehmen in ${id}“ oder prüfen Sie den Eintrag.`)}
-                />
-              )}
-              <div className="flex flex-wrap items-start gap-2">
-                <RevealHint id={`fig-${id}-where`} label={tt("Show where the numbers are", "Zeigen, wo die Zahlen stehen")} title={tt("Numbers you need · the printed rows", "Zahlen, die Sie brauchen · die gedruckten Zeilen")}>
-                  <ul className="space-y-1 text-caption">
-                    {f.sources.map((s) => (
-                      <li key={s.label}>
-                        <button type="button" onClick={() => scrollToAndFlash(s.target, "ref")} className="flex min-h-[36px] w-full flex-wrap items-baseline gap-x-2 rounded px-2 py-1 text-left hover:bg-accentSoft">
-                          <span className="text-ink">{s.label}:</span>
-                          <span className="tnum font-semibold text-ink">{s.value === "F1" ? l1.fig.F1.trim() || tt("your F1", "Ihr F1") : s.value}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </RevealHint>
-                <RevealHint id={`fig-${id}-formula`} label={tt("Show the formula", "Formel zeigen")} title={tt(`The formula · from Materi ${f.taughtIn}`, `Die Formel · aus Materi ${f.taughtIn}`)} forceOpen={partsFlagged}>
-                  <p className="text-caption text-ink">
-                    <Gloss>{f.formula}</Gloss>
-                  </p>
-                  <FormulaBuilder
-                    figure={id}
-                    builder={b}
-                    parts={l1.parts}
-                    partFlags={l1.partFlags}
-                    onPart={(k, v) => patch((s) => ({ parts: { ...s.parts, [k]: v }, partFlags: s.partFlags.filter((x) => x !== k) }))}
-                    onUse={(v) => setFig(id, String(Math.round(v * 100) / 100))}
-                    unit={f.unit}
-                    label={id}
-                    source={tt("the tables above", "den Tabellen oben")}
-                  />
-                </RevealHint>
-              </div>
-              {mentor && <MentorGuide guide={figureGuide(id)} />}
-            </div>
-          );
-        })}
-      </div>
+      <p className="text-caption text-ash">
+        {tt(
+          `Read it like this: of every 100 e-mails, ${num(FORECAST.controlRate, { maximumFractionDigits: 1 })} led to an order with the standard offer and ${num(FORECAST.f1, { maximumFractionDigits: 1 })} with the personalised one, so the personalised offer sold ${num(FORECAST.f2)} times as often. Each group has only ${PILOT.control.orders} and ${PILOT.variant.orders} orders behind it.`,
+          `So lesen Sie es: Von je 100 E-Mails führten ${num(FORECAST.controlRate, { maximumFractionDigits: 1 })} beim Standardangebot und ${num(FORECAST.f1, { maximumFractionDigits: 1 })} beim personalisierten zu einer Bestellung, das personalisierte Angebot verkaufte also ${num(FORECAST.f2)}-mal so oft. Hinter jeder Gruppe stehen nur ${PILOT.control.orders} und ${PILOT.variant.orders} Bestellungen.`,
+        )}
+      </p>
       <TextBox
         id={IDS.meaning}
         label={tt("What does the pilot mean for AIConnect?", "Was bedeutet der Pilot für AIConnect?")}
-        help={tt("One or two sentences. Use at least one of your figures and say what AIConnect should do next, and how sure it can be.", "Ein oder zwei Sätze. Nutzen Sie mindestens einen Ihrer Werte und sagen Sie, was AIConnect als Nächstes tun sollte und wie sicher es sein kann.")}
+        help={tt("One or two sentences. Quote at least one printed figure, say what AIConnect should do next, and why it cannot be sure yet.", "Ein oder zwei Sätze. Zitieren Sie mindestens einen gedruckten Wert, sagen Sie, was AIConnect als Nächstes tun sollte, und warum es noch nicht sicher sein kann.")}
         value={l1.meaning}
         onChange={(v) => patch({ meaning: v, meaningFlagged: false })}
         min={MIN_SENTENCE}
         rows={4}
         flagged={l1.meaningFlagged}
-        clue={tt("Which of your figures says how much better the personalised offer did, and which says what it is worth in a year? Quote one and say what follows.", "Welche Ihrer Zahlen sagt, wie viel besser das personalisierte Angebot abschnitt, und welche, was es in einem Jahr wert ist? Zitieren Sie eine und sagen Sie, was folgt.")}
+        clue={tt("Which printed figure says how much better the personalised offer did, and how many orders stand behind each group? Quote one and say what follows.", "Welcher gedruckte Wert sagt, wie viel besser das personalisierte Angebot abschnitt, und wie viele Bestellungen stehen hinter jeder Gruppe? Zitieren Sie einen und sagen Sie, was folgt.")}
         clueShown={l1.meaningClue}
         onShowClue={() => patch({ meaningClue: true })}
       >
         <WritingHelp
           id="meaning-help"
-          steps={[
-            tt("Say how much better the personalised offer converted (your uplift, or the two rates).", "Sagen Sie, wie viel besser das personalisierte Angebot konvertierte (Ihr Uplift, oder die zwei Raten)."),
-            tt("Say what it would be worth in a year.", "Sagen Sie, was es in einem Jahr wert wäre."),
-            tt("Finish with the next step, and say it as an estimate: a pilot is not yet proof.", "Schließen Sie mit dem nächsten Schritt, und sagen Sie es als Schätzung: Ein Pilot ist noch kein Beweis."),
+          refs={[
+            { label: tt("Conversion rates, standard and personalised", "Conversion Rates, Standard und personalisiert"), value: `${pct(FORECAST.controlRate)} · ${pct(FORECAST.f1)}`, target: "fc-var" },
+            { label: tt("Orders behind each group", "Bestellungen hinter jeder Gruppe"), value: `${PILOT.control.orders} · ${PILOT.variant.orders}`, target: "fc-ctl" },
+            { label: tt("Why a pilot is not yet proof (Materi A6)", "Warum ein Pilot noch kein Beweis ist (Materi A6)"), value: tt("a small base can be partly luck", "eine kleine Basis kann teilweise Zufall sein"), target: "mat-A6" },
           ]}
-          refs={[{ label: tt("Offer e-mails a year", "Angebots-E-Mails pro Jahr"), value: num(PILOT.yearly), target: "fc-yearly" }]}
+          steps={[
+            tt("Say how much better the personalised offer converted (the two rates, or “1.6 times”).", "Sagen Sie, wie viel besser das personalisierte Angebot konvertierte (die zwei Raten, oder „1,6-mal“)."),
+            tt("Say what AIConnect should do next, for example a larger second test.", "Sagen Sie, was AIConnect als Nächstes tun sollte, zum Beispiel einen größeren zweiten Test."),
+            tt("Say it as an estimate: a pilot is not yet proof.", "Sagen Sie es als Schätzung: Ein Pilot ist noch kein Beweis."),
+          ]}
         />
       </TextBox>
+      <ExampleAnswer id="meaning-example" guide={meaningGuide()} />
       {mentor && <MentorGuide guide={meaningGuide()} />}
-      <CheckBar onCheck={check} checkLabel={tt("Check my figures and sentence", "Meine Werte und meinen Satz prüfen")} checks={l1.checks} />
+      <CheckBar onCheck={check} checkLabel={tt("Check my sentence", "Meinen Satz prüfen")} checks={l1.checks} />
       {l1.checks > 0 && (
         <Reading>
-          {l1.figFlagged.length === 0 && !l1.meaningFlagged && l1.partFlags.length === 0
+          {!l1.meaningFlagged
             ? tt("Nothing is outlined by the last check.", "Die letzte Prüfung hat nichts markiert.")
-            : tt(
-                `${l1.figFlagged.length > 0 ? `${l1.figFlagged.length} figure${l1.figFlagged.length === 1 ? " is" : "s are"} outlined above. Each says what to check.` : ""}${l1.meaningFlagged ? " The sentence needs at least one of your pilot figures." : ""}${l1.partFlags.length > 0 ? " A part of the formula calculator is outlined." : ""}`,
-                `${l1.figFlagged.length > 0 ? `${l1.figFlagged.length} ${l1.figFlagged.length === 1 ? "Wert ist" : "Werte sind"} oben markiert. Jeder sagt, was zu prüfen ist.` : ""}${l1.meaningFlagged ? " Der Satz braucht mindestens einen Ihrer Pilotwerte." : ""}${l1.partFlags.length > 0 ? " Ein Teil des Formelrechners ist markiert." : ""}`,
-              )}
+            : tt("The sentence is outlined: it needs at least one printed figure and a few words more.", "Der Satz ist markiert: Er braucht mindestens einen gedruckten Wert und ein paar Worte mehr.")}
         </Reading>
       )}
+      <BlockMissing block="1.2" route={1} />
     </AnswerBlock>
   );
 }
@@ -286,10 +240,19 @@ export function Block13() {
       id="block-1-3"
       title={tt("Block 1.3 · Where automation fits, and what customers gain", "Block 1.3 · Wo Automatisierung passt, und was Kunden gewinnen")}
       kind="OBJECTIVE + JUDGED"
+      core
       minutes={BLOCK_MINUTES["1.3"]}
       findIt={tt("Route 1 → Task 1 → the table “Eight contact situations” below: requests a month, whether the answer is the same every time, and what is at stake. Answer in the two lists and the three fields under it.", "Route 1 → Task 1 → die Tabelle „Acht Kontaktsituationen“ unten: Anfragen pro Monat, ob die Antwort jedes Mal dieselbe ist, und was auf dem Spiel steht. Antworten Sie in den zwei Listen und den drei Feldern darunter.")}
     >
       <MaterialRefs refs={["A3"]} />
+      <p className="rounded-md border border-line bg-mist/40 px-3 py-2 text-caption text-ink">
+        <Gloss>
+          {tt(
+            "How to read the table. Each row is one kind of contact that reaches AIConnect's service and sales teams, for example a customer who cannot log in. “Requests a month” says how often it happens (bold means 100 or more). “Same answer every time?” says whether the right answer is identical for every customer, like a password reset, or depends on the customer. “What is at stake” says what the customer could lose: low is a short wait, mid is a price or a bill, high is a whole contract or an upset customer.",
+            "So lesen Sie die Tabelle. Jede Zeile ist eine Art von Kontakt, der beim Service und Vertrieb von AIConnect ankommt, zum Beispiel ein Kunde, der sich nicht anmelden kann. „Anfragen pro Monat“ sagt, wie oft das vorkommt (fett heißt 100 oder mehr). „Jedes Mal dieselbe Antwort?“ sagt, ob die richtige Antwort für jeden Kunden gleich ist, wie bei einem Passwort-Reset, oder vom Kunden abhängt. „Was auf dem Spiel steht“ sagt, was der Kunde verlieren könnte: gering ist eine kurze Wartezeit, mittel ein Preis oder eine Rechnung, hoch ein ganzer Vertrag oder ein verärgerter Kunde.",
+          )}
+        </Gloss>
+      </p>
       <div className="relative overflow-x-auto rounded-lg border border-line">
         <table className="w-full min-w-[36rem] border-collapse text-caption">
           <caption className="bg-mist px-3 py-2 text-left text-micro font-semibold uppercase text-ash">{tt("Eight contact situations · AIConnect's service and sales requests (Case assumption)", "Acht Kontaktsituationen · Service- und Vertriebsanfragen bei AIConnect (Fallannahme)")}</caption>
@@ -375,7 +338,23 @@ export function Block13() {
                 </select>
                 {a.basis && <p className="mt-1 text-micro normal-case tracking-normal text-ash">{tt("Chosen: ", "Gewählt: ")}{BASIS_LABEL[a.basis]}</p>}
               </div>
+              {i === 0 && (
+                <WritingHelp
+                  id="insight-kit"
+                  refs={[
+                    { label: tt("What each technology does (Materi A2 and A3)", "Was jede Technologie tut (Materi A2 und A3)"), value: tt("suggests a product · adapts the message · does a step by itself", "schlägt ein Produkt vor · passt die Nachricht an · erledigt einen Schritt selbst"), target: "mat-A3" },
+                    { label: tt("The contact situations (table above)", "Die Kontaktsituationen (Tabelle oben)"), value: tt("what customers ask for, and what is at stake", "worum Kunden bitten, und was auf dem Spiel steht"), target: "cust-c1" },
+                    { label: tt("Risks named in Materi A1 and A3", "Risiken in Materi A1 und A3"), value: tt("wrong or pushy suggestions · feeling watched · being stuck with a machine", "falsche oder aufdringliche Vorschläge · sich beobachtet fühlen · bei einer Maschine festhängen"), target: "mat-A1" },
+                  ]}
+                  steps={[
+                    tt("Choose the technology and name what the customer gains from it (time saved, a fitting offer, a message at the right moment).", "Wählen Sie die Technologie und nennen Sie, was der Kunde davon hat (gesparte Zeit, ein passendes Angebot, eine Nachricht zur richtigen Zeit)."),
+                    tt("Say it in one sentence from the customer's side.", "Sagen Sie es in einem Satz aus Sicht des Kunden."),
+                    tt("Finish with “but” and the risk the same technology brings.", "Schließen Sie mit „aber“ und dem Risiko, das dieselbe Technologie mitbringt."),
+                  ]}
+                />
+              )}
             </TextBox>
+            <ExampleAnswer id={`insight-${i}-example`} guide={insightGuide(i)} />
             {mentor && <MentorGuide guide={insightGuide(i)} />}
           </div>
         ))}
@@ -388,11 +367,12 @@ export function Block13() {
             : tt(`${l1.insFlagged.length} advantage${l1.insFlagged.length === 1 ? " is" : "s are"} outlined: the technology is missing or repeated, the text is short, or it names no risk.`, `${l1.insFlagged.length} ${l1.insFlagged.length === 1 ? "Vorteil ist" : "Vorteile sind"} markiert: Die Technologie fehlt oder wiederholt sich, der Text ist kurz, oder er nennt kein Risiko.`)}
         </Reading>
       )}
+      <BlockMissing block="1.3" route={1} />
     </AnswerBlock>
   );
 }
 
-/* ------------------------------------------------------------------ Block 1.4 */
+/* ------------------------------------------------------------------ Block 1.4 (Optional) */
 
 export function Block14() {
   const l1 = useStore((s) => s.l1);
@@ -400,16 +380,17 @@ export function Block14() {
   const mentor = useStore((s) => s.mentorUnlocked);
   const fields: { k: "interpret" | "causation" | "decider"; label: string; help: string }[] = [
     { k: "interpret", label: tt("When does AI bring real added value, and when is it technology without strategy?", "Wann bringt KI echten Mehrwert, und wann ist es Technologie ohne Strategie?"), help: tt("One or two sentences, using one idea from Block 1.1 that adds value and one that would not.", "Ein oder zwei Sätze, mit einer Idee aus Block 1.1, die Mehrwert bringt, und einer, die es nicht täte.") },
-    { k: "causation", label: tt("Automation or customer experience: where would automating a contact make it worse?", "Automatisierung oder Kundenerlebnis: Wo würde ein automatisierter Kontakt es verschlechtern?"), help: tt("Name a situation from Block 1.3, what a customer would feel, and what that costs AIConnect.", "Nennen Sie eine Situation aus Block 1.3, was ein Kunde empfinden würde, und was das AIConnect kostet.") },
-    { k: "decider", label: tt("How would a data-driven decision-maker read the pilot before rolling it out?", "Wie würde eine datengetriebene Entscheiderin den Pilot lesen, bevor sie ihn ausrollt?"), help: tt("What would they check first in Block 1.2, what would they not yet conclude, and what would they do next? Be concrete.", "Was würde sie in Block 1.2 zuerst prüfen, was noch nicht schließen, und was als Nächstes tun? Seien Sie konkret.") },
+    { k: "causation", label: tt("Automation or customer experience: where would automating a contact make it worse?", "Automatisierung oder Kundenerlebnis: Wo würde ein automatisierter Kontakt es verschlechtern?"), help: tt("Name a situation from the table in Block 1.3, what a customer would feel, and what that costs AIConnect.", "Nennen Sie eine Situation aus der Tabelle in Block 1.3, was ein Kunde empfinden würde, und was das AIConnect kostet.") },
+    { k: "decider", label: tt("How would a data-driven decision-maker read a pilot like AIConnect's before rolling it out?", "Wie würde eine datengetriebene Entscheiderin einen Pilot wie den von AIConnect lesen, bevor sie ihn ausrollt?"), help: tt("A pilot sent 2,000 e-mails to each group and counted 60 and 96 orders. What would they check first, what would they not yet conclude, and what would they do next? Be concrete.", "Ein Pilot schickte 2.000 E-Mails an jede Gruppe und zählte 60 und 96 Bestellungen. Was würde sie zuerst prüfen, was noch nicht schließen, und was als Nächstes tun? Seien Sie konkret.") },
   ];
   return (
     <AnswerBlock
       id="block-1-4"
       title={tt("Block 1.4 · Coaching reflection: from Level 1 to Level 2", "Block 1.4 · Coaching-Reflexion: von Level 1 zu Level 2")}
       kind="JUDGED"
+      core={false}
       minutes={BLOCK_MINUTES["1.4"]}
-      findIt={tt("Route 1 → Task 1 → your own answers in Blocks 1.1 to 1.3, and the two starting points in Materi A1. Answer in the three fields below.", "Route 1 → Task 1 → Ihre eigenen Antworten in den Blöcken 1.1 bis 1.3 und die zwei Ausgangspunkte in Materi A1. Antworten Sie in den drei Feldern unten.")}
+      findIt={tt("Route 1 → Task 1 → your own answers in Blocks 1.1 and 1.3, and the two starting points in Materi A1. Answer in the three fields below.", "Route 1 → Task 1 → Ihre eigenen Antworten in den Blöcken 1.1 und 1.3 und die zwei Ausgangspunkte in Materi A1. Antworten Sie in den drei Feldern unten.")}
     >
       <MaterialRefs refs={["A1", "A3", "A6"]} />
       <p className="text-body text-ink">
@@ -418,9 +399,11 @@ export function Block14() {
       {fields.map((f) => (
         <div key={f.k} className="space-y-1.5">
           <TextBox id={IDS.reflect(f.k)} label={f.label} help={f.help} value={l1.reflect[f.k]} onChange={(v) => patch((s) => ({ reflect: { ...s.reflect, [f.k]: v } }))} min={MIN_LINE} rows={3} />
+          <ExampleAnswer id={`reflect-${f.k}-example`} guide={reflectGuide(f.k)} />
           {mentor && <MentorGuide guide={reflectGuide(f.k)} />}
         </div>
       ))}
+      <BlockMissing block="1.4" route={1} />
     </AnswerBlock>
   );
 }

@@ -1,15 +1,19 @@
 "use client";
 
+import clsx from "clsx";
 import { useId, useState } from "react";
-import { Insight, Toggles } from "@/components/materi/kit";
+import { Insight, Story, ThePoint, Toggles, useStory } from "@/components/materi/kit";
 import { CASES_MIN, LIFT_ACT, LIFT_WATCH } from "@/data/route2";
 import { bi, num, t, tt } from "@/lib/lang";
 import { Gloss } from "@/lib/glossify";
 
 /**
  * The interactive diagrams of Materi B (Route 2). Every one uses the worked-example company Spree Systems (a Berlin software provider,
- * Case assumption), never AIConnect. Every control is followed by an always-visible "What this shows" (CLAUDE.md #20).
+ * Case assumption), never AIConnect. Every control is followed by an always-visible "What this shows" (CLAUDE.md #20), every picture opens with "The point" and carries a three-step "Walk me through it" story that
+ * drives the real controls (CLAUDE.md #36); a manual button leaves the story.
  */
+/** "In plain words:" leads every reading of a control (CLAUDE.md #36). */
+const plain = () => tt("In plain words: ", "In einfachen Worten: ");
 const C = { ink: "#1F2328", ash: "#59606A", paper: "#FFFEFA", mist: "#ECE6D6", line: "#D8D1BF", amber: "#8A5A0B", gold: "#D99A2B", teal: "#0F6B6B", tealSoft: "#DFEEEB", data: "#2F5D62", grey: "#8B9098", soft: "#FBF0D6", rust: "#A4472A" };
 
 /* ------------------------------------------------------------------ B1 · four stages towards an AI-based control system */
@@ -25,11 +29,43 @@ const STAGE_TEXT = bi({
 
 export function DataStages() {
   const uid = useId().replace(/:/g, "");
-  const [st, setSt] = useState<Stage>("dash");
+  const [st, setStRaw] = useState<Stage>("dash");
+  const story = useStory([
+    {
+      title: tt("A system that learns", "Ein System, das lernt"),
+      say: tt(`Spree Systems is an example company, not your case. Every quarter it compares results with forecasts, rolls out the winners and stops the losers.`, `Spree Systems ist ein Beispielunternehmen, nicht Ihr Fall. Jedes Quartal vergleicht es Ergebnisse mit Prognosen, rollt die Gewinner aus und stoppt die Verlierer.`),
+      look: tt("the last, tallest bar", "der letzte, höchste Balken"),
+      apply: () => {
+        setStRaw("forecast");
+      },
+    },
+    {
+      title: tt("Single tools", "Einzelne Werkzeuge"),
+      say: tt(`Before that, Spree ran a chatbot here and a newsletter tool there, each with its own activity report. Every tool said it was busy; nobody could say what any of them did for revenue.`, `Davor betrieb Spree hier einen Chatbot und dort ein Newsletter-Tool, jedes mit eigenem Aktivitätsbericht. Jedes Werkzeug sagte, es sei beschäftigt; niemand konnte sagen, was eines davon für den Umsatz tat.`),
+      look: tt("the first, shortest bar", "der erste, niedrigste Balken"),
+      apply: () => {
+        setStRaw("report");
+      },
+    },
+    {
+      title: tt("The point", "Das Wichtigste"),
+      say: tt(`The jump from tools to a system is the KPI system: a few numbers that every team reads the same way. Try the four stages.`, `Der Sprung von Werkzeugen zu einem System ist das KPI-System: wenige Zahlen, die jedes Team gleich liest. Probieren Sie die vier Stufen.`),
+      look: tt("the second bar", "der zweite Balken"),
+      apply: () => {
+        setStRaw("dash");
+      },
+    },
+  ]);
+  const setSt = (v: Stage) => {
+    story.leave();
+    setStRaw(v);
+  };
   const idx = STAGES.indexOf(st);
   const s = STAGE_TEXT[st];
   return (
     <div className="space-y-3">
+      <ThePoint>{tt("An AI-based retention system is not a pile of tools. It is one KPI system everyone steers by, technology that proves itself before it scales, and a loop that keeps learning.", "Ein KI-gestütztes Bindungssystem ist kein Haufen von Werkzeugen. Es ist ein KPI-System, nach dem alle steuern, Technologie, die sich beweist, bevor sie skaliert, und ein Kreislauf, der weiter lernt.")}</ThePoint>
+      <Story steps={story.plan} step={story.step} onStep={story.go} />
       <svg viewBox="0 0 560 150" className="mx-auto h-auto w-full max-w-[600px]" role="img" aria-labelledby={`${uid}-t ${uid}-d`}>
         <title id={`${uid}-t`}>{tt("Four stages towards an AI-based control system", "Vier Stufen zu einem KI-gestützten Steuerungssystem")}</title>
         <desc id={`${uid}-d`}>{tt(`Stage shown: ${s.name}.`, `Gezeigte Stufe: ${s.name}.`)}</desc>
@@ -39,6 +75,7 @@ export function DataStages() {
           const on = i <= idx;
           return (
             <g key={k} className="hit" role="button" tabIndex={0} aria-label={STAGE_TEXT[k].name} onClick={() => setSt(k)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setSt(k)}>
+              {k === st && story.step !== null && <rect x={x - 4} y={130 - h - 4} width="136" height={h + 8} rx="6" fill="none" stroke={C.amber} strokeWidth="2" strokeDasharray="5 4" className="anim-pulse" />}
               <rect className="hit-shape" x={x} y={130 - h} width="128" height={h} fill={k === st ? C.gold : on ? C.data : C.paper} stroke={C.ink} strokeWidth="1.4" />
               <text x={x + 64} y={146} textAnchor="middle" fontSize="11" fill={C.ash}>{`${i + 1}`}</text>
             </g>
@@ -51,7 +88,7 @@ export function DataStages() {
         <span className="smallcaps mr-1.5">Spree Systems</span>
         {s.spree}
       </p>
-      <Insight>{s.reading}</Insight>
+      <Insight>{plain()}{s.reading}</Insight>
     </div>
   );
 }
@@ -69,13 +106,45 @@ const I_SRC: ISrc[] = bi([
 const useOfI = (s: ISrc) => (!s.decision ? "leave" : s.complete >= 80 ? "core" : "later");
 export function SourceGrid() {
   const uid = useId().replace(/:/g, "");
-  const [sel, setSel] = useState("voice");
+  const [sel, setSelRaw] = useState("voice");
+  const story = useStory([
+    {
+      title: tt("Select now", "Jetzt auswählen"),
+      say: tt(`Spree Systems is an example company, not your case. Its upsell recommender names a KPI it should move, and ${I_SRC[0].complete}% of its data is ready: select now, and test it against a control group.`, `Spree Systems ist ein Beispielunternehmen, nicht Ihr Fall. Seine Upsell-Empfehlung nennt einen KPI, den sie bewegen soll, und ${I_SRC[0].complete} % ihrer Daten sind bereit: jetzt auswählen und gegen eine Kontrollgruppe testen.`),
+      look: tt("the dot in the teal area", "der Punkt im türkisen Feld"),
+      apply: () => {
+        setSelRaw("upsell");
+      },
+    },
+    {
+      title: tt("Data first", "Erst die Daten"),
+      say: tt(`The voice bot would move a KPI too, but only ${I_SRC[2].complete}% of its data is ready. Built now, it would learn the gaps. Fix the data first, then pilot it.`, `Der Sprachbot würde auch einen KPI bewegen, aber nur ${I_SRC[2].complete} % seiner Daten sind bereit. Jetzt gebaut, würde er die Lücken lernen. Erst die Daten verbessern, dann pilotieren.`),
+      look: tt("the dot in the amber area", "der Punkt im bernsteinfarbenen Feld"),
+      apply: () => {
+        setSelRaw("voice");
+      },
+    },
+    {
+      title: tt("The point", "Das Wichtigste"),
+      say: tt(`AI ad images have ${I_SRC[4].complete}% of their data ready and look impressive, but they move no KPI of the system. However modern, not now. Try the other technologies.`, `KI-Werbebilder haben ${I_SRC[4].complete} % ihrer Daten bereit und sehen beeindruckend aus, bewegen aber keinen KPI des Systems. Egal wie modern: jetzt nicht. Probieren Sie die anderen Technologien.`),
+      look: tt("the dot in the grey area", "der Punkt im grauen Feld"),
+      apply: () => {
+        setSelRaw("images");
+      },
+    },
+  ]);
+  const setSel = (v: string) => {
+    story.leave();
+    setSelRaw(v);
+  };
   const s = I_SRC.find((x) => x.id === sel)!;
   const u = useOfI(s);
   const POS: Record<string, { cx: number; cy: number }> = { upsell: { cx: 300, cy: 58 }, winback: { cx: 300, cy: 88 }, voice: { cx: 90, cy: 72 }, sentiment: { cx: 90, cy: 138 }, images: { cx: 300, cy: 138 } };
   const pos = (x: ISrc, _i: number) => POS[x.id];
   return (
     <div className="space-y-3">
+      <ThePoint>{tt("Start from the KPI, not from the tool. A technology that names a KPI and has its data ready is selected now; with data not ready it waits; with no KPI it is not now, however modern.", "Gehen Sie vom KPI aus, nicht vom Werkzeug. Eine Technologie, die einen KPI nennt und deren Daten bereit sind, wird jetzt gewählt; mit nicht bereiten Daten wartet sie; ohne KPI ist sie jetzt nicht dran, egal wie modern.")}</ThePoint>
+      <Story steps={story.plan} step={story.step} onStep={story.go} />
       <svg viewBox="0 0 560 210" className="mx-auto h-auto w-full max-w-[600px]" role="img" aria-labelledby={`${uid}-t ${uid}-d`}>
         <title id={`${uid}-t`}>{tt("Spree Systems' candidate technologies by KPI and data readiness", "Kandidaten-Technologien von Spree Systems nach KPI und Datenbereitschaft")}</title>
         <desc id={`${uid}-d`}>{I_SRC.map((x) => `${x.name}: ${useOfI(x)}`).join(", ")}</desc>
@@ -93,6 +162,7 @@ export function SourceGrid() {
           const on = x.id === sel;
           return (
             <g key={x.id} className="hit" role="button" tabIndex={0} aria-label={x.name} onClick={() => setSel(x.id)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setSel(x.id)}>
+              {on && story.step !== null && <circle cx={p.cx} cy={p.cy} r="17" fill="none" stroke={C.amber} strokeWidth="2" strokeDasharray="5 4" className="anim-pulse" />}
               <circle className="hit-shape" cx={p.cx} cy={p.cy} r={on ? 11 : 8} fill={on ? C.gold : C.paper} stroke={C.ink} strokeWidth="1.6" />
               <text x={p.cx + 14} y={p.cy + 4} fontSize="11.5" fontWeight={on ? 800 : 500} fill={C.ink}>{x.name}</text>
             </g>
@@ -100,7 +170,7 @@ export function SourceGrid() {
         })}
       </svg>
       <Toggles<string> label={tt("Technology", "Technologie")} value={sel} onChange={setSel} options={I_SRC.map((x) => ({ id: x.id, label: x.name }))} />
-      <Insight>
+      <Insight>{plain()}
         {u === "core"
           ? tt(`${s.name}: it names a KPI it should move and ${s.complete}% of its data is ready. Select now, and test it against a control group before it reaches everyone.`, `${s.name}: Sie nennt einen KPI, den sie bewegen soll, und ${s.complete} % ihrer Daten sind bereit. Jetzt auswählen, und vor dem Rollout gegen eine Kontrollgruppe testen.`)
           : u === "later"
@@ -124,11 +194,43 @@ const I_COMPS = bi([
 ]);
 export function CompProfile() {
   const uid = useId().replace(/:/g, "");
-  const [sel, setSel] = useState("views");
+  const [sel, setSelRaw] = useState("views");
+  const story = useStory([
+    {
+      title: tt("A KPI that passes", "Ein KPI, der besteht"),
+      say: tt(`Spree Systems is an example company, not your case. Its upgrade rate is money, moves weekly, covers every customer and is counted by the systems: High on all four, 12 of 12.`, `Spree Systems ist ein Beispielunternehmen, nicht Ihr Fall. Seine Upgrade-Rate ist Geld, bewegt sich wöchentlich, deckt jeden Kunden ab und wird von den Systemen gezählt: Hoch auf allen vier, 12 von 12.`),
+      look: tt("all four rows filled to High", "alle vier Zeilen bis Hoch gefüllt"),
+      apply: () => {
+        setSelRaw("upgrade");
+      },
+    },
+    {
+      title: tt("A number that does not", "Eine Zahl, die nicht besteht"),
+      say: tt(`Offer page views are fast, complete and automatic, but they rose while orders fell: views are not purchases. The link to value stays Low, whatever the rest.`, `Aufrufe der Angebotsseite sind schnell, vollständig und automatisch, stiegen aber, während die Bestellungen fielen: Aufrufe sind keine Käufe. Die Verbindung zum Wert bleibt Niedrig, egal wie der Rest ist.`),
+      look: tt("the first row, Link to value", "die erste Zeile, Verbindung zum Wert"),
+      apply: () => {
+        setSelRaw("views");
+      },
+    },
+    {
+      title: tt("The point", "Das Wichtigste"),
+      say: tt(`The yearly survey score is linked to value but arrives once a year, so it is Low on early: a number for learning, not for steering. Try the other candidates.`, `Der jährliche Befragungswert ist mit dem Wert verbunden, kommt aber einmal im Jahr und ist daher bei „früh“ Niedrig: eine Zahl zum Lernen, nicht zum Steuern. Probieren Sie die anderen Kandidaten.`),
+      look: tt("the second row, Early", "die zweite Zeile, Früh"),
+      apply: () => {
+        setSelRaw("survey");
+      },
+    },
+  ]);
+  const setSel = (v: string) => {
+    story.leave();
+    setSelRaw(v);
+  };
   const c = I_COMPS.find((x) => x.id === sel)!;
   const total = I_CRITS.reduce((s, k) => s + c.r[k], 0);
   return (
     <div className="space-y-3">
+      <ThePoint>{tt("A KPI worth steering by is linked to value, shows a change early, covers every customer and is counted by the systems. The printed facts cap each rating.", "Ein KPI, nach dem es sich zu steuern lohnt, ist mit dem Wert verbunden, zeigt früh eine Veränderung, deckt jeden Kunden ab und wird von den Systemen gezählt. Die gedruckten Fakten deckeln jede Bewertung.")}</ThePoint>
+      <Story steps={story.plan} step={story.step} onStep={story.go} />
       <svg viewBox="0 0 560 170" className="mx-auto h-auto w-full max-w-[600px]" role="img" aria-labelledby={`${uid}-t ${uid}-d`}>
         <title id={`${uid}-t`}>{tt("One KPI candidate of Spree Systems on four tests", "Ein KPI-Kandidat von Spree Systems nach vier Tests")}</title>
         <desc id={`${uid}-d`}>{I_CRITS.map((k) => `${I_CRIT_NAME[k]} ${c.r[k]}`).join(", ")}</desc>
@@ -137,6 +239,7 @@ export function CompProfile() {
           const v = c.r[k];
           return (
             <g key={k}>
+              {((story.step === 1 && k === "explain") || (story.step === 2 && k === "timely")) && <rect x="-4" y={y - 3} width="556" height="32" rx="6" fill="none" stroke={C.amber} strokeWidth="2" strokeDasharray="5 4" className="anim-pulse" />}
               <text x="0" y={y + 18} fontSize="12" fill={C.ink}>{I_CRIT_NAME[k]}</text>
               {[1, 2, 3].map((b) => (
                 <rect key={b} x={160 + (b - 1) * 110} y={y} width="104" height="26" fill={b <= v ? (v === 1 ? C.grey : C.data) : C.paper} stroke={C.ink} strokeDasharray={b <= v ? undefined : "4 3"} />
@@ -151,7 +254,7 @@ export function CompProfile() {
         <span className="font-semibold text-ink">{tt("Printed facts: ", "Gedruckte Fakten: ")}</span>
         {c.facts}
       </p>
-      <Insight>
+      <Insight>{plain()}
         {tt(`${c.name}: ${total} of 12. ${c.note} Each rating is capped by a printed fact: “not linked to value” caps the link at Low; “after the customer has left” or “yearly” caps early at Low; “some customers” caps reach at Mid; “collected by hand” caps measured automatically at Low.`, `${c.name}: ${total} von 12. ${c.note} Jede Bewertung ist durch einen gedruckten Fakt gedeckelt: „nicht mit dem Wert verbunden“ deckelt die Verbindung bei Niedrig; „nachdem der Kunde gegangen ist“ oder „jährlich“ deckeln früh bei Niedrig; „einige Kunden“ deckelt die Reichweite bei Mittel; „von Hand gesammelt“ deckelt automatisch gemessen bei Niedrig.`)}
       </Insight>
     </div>
@@ -162,13 +265,52 @@ export function CompProfile() {
 
 export function LiftCases() {
   const uid = useId().replace(/:/g, "");
-  const [lift, setLift] = useState(20);
-  const [cases, setCases] = useState(40);
+  const [lift, setLiftRaw] = useState(20);
+  const [cases, setCasesRaw] = useState(40);
+  const story = useStory([
+    {
+      title: tt("Roll out", "Ausrollen"),
+      say: tt(`Spree Systems is an example company, not your case. An upsell test shows +30% on 200 conversions per group: clear and proven. Roll out.`, `Spree Systems ist ein Beispielunternehmen, nicht Ihr Fall. Ein Upsell-Test zeigt +30 % bei 200 Conversions pro Gruppe: klar und belegt. Ausrollen.`),
+      look: tt("the dot in the teal area", "der Punkt im türkisen Feld"),
+      apply: () => {
+        setLiftRaw(30);
+        setCasesRaw(200);
+      },
+    },
+    {
+      title: tt("Keep testing", "Weiter testen"),
+      say: tt(`Another test also shows +30%, but on only 40 conversions per group, fewer than ${CASES_MIN}. Too few to trust it: keep testing.`, `Ein anderer Test zeigt auch +30 %, aber nur bei 40 Conversions pro Gruppe, weniger als ${CASES_MIN}. Zu wenig, um ihm zu trauen: weiter testen.`),
+      look: tt("the dot in the left amber strip", "der Punkt im linken bernsteinfarbenen Streifen"),
+      apply: () => {
+        setLiftRaw(30);
+        setCasesRaw(40);
+      },
+    },
+    {
+      title: tt("The point", "Das Wichtigste"),
+      say: tt(`A third test shows +2% on 300 conversions. Many conversions do not rescue a tiny uplift: they prove it is tiny. Stop. Move the two sliders to try your own.`, `Ein dritter Test zeigt +2 % bei 300 Conversions. Viele Conversions retten keinen winzigen Uplift: Sie beweisen, dass er winzig ist. Stoppen. Bewegen Sie die beiden Regler, um eigene Werte zu probieren.`),
+      look: tt("the dot in the grey area", "der Punkt im grauen Feld"),
+      apply: () => {
+        setLiftRaw(2);
+        setCasesRaw(300);
+      },
+    },
+  ]);
+  const setLift = (v: number) => {
+    story.leave();
+    setLiftRaw(v);
+  };
+  const setCases = (v: number) => {
+    story.leave();
+    setCasesRaw(v);
+  };
   const act = lift >= LIFT_ACT && cases >= CASES_MIN ? "intervene" : lift >= LIFT_WATCH ? "watch" : "none";
   const X = (c: number) => 60 + (Math.min(c, 300) / 300) * 460;
   const Y = (l: number) => 170 - ((Math.min(Math.max(l, -10), 60) + 10) / 70) * 150;
   return (
     <div className="space-y-3">
+      <ThePoint>{tt("Every test ends in a decision. A clear uplift on enough conversions: roll out. A strong uplift on too few, or a small one: keep testing. No real uplift: stop.", "Jeder Test endet in einer Entscheidung. Ein klarer Uplift bei genug Conversions: ausrollen. Ein starker Uplift bei zu wenigen oder ein kleiner: weiter testen. Kein echter Uplift: stoppen.")}</ThePoint>
+      <Story steps={story.plan} step={story.step} onStep={story.go} />
       <svg viewBox="0 0 560 200" className="mx-auto h-auto w-full max-w-[600px]" role="img" aria-labelledby={`${uid}-t ${uid}-d`}>
         <title id={`${uid}-t`}>{tt("Roll out, keep testing or stop, by uplift and conversions per group", "Ausrollen, weiter testen oder stoppen, nach Uplift und Conversions pro Gruppe")}</title>
         <desc id={`${uid}-d`}>{tt(`Uplift ${lift}%, ${cases} conversions: ${act}.`, `Uplift ${lift} %, ${cases} Conversions: ${act}.`)}</desc>
@@ -184,6 +326,7 @@ export function LiftCases() {
         <line x1={X(0)} y1={Y(-10)} x2={X(0)} y2={Y(60)} stroke={C.ash} />
         <text x={X(150)} y="196" textAnchor="middle" fontSize="11" fill={C.ash}>{tt("conversions in the smaller group →", "Conversions in der kleineren Gruppe →")}</text>
         <text x="16" y={Y(25)} textAnchor="middle" fontSize="11" fill={C.ash} transform={`rotate(-90 16 ${Y(25)})`}>{tt("uplift % →", "Uplift % →")}</text>
+        {story.step !== null && <circle cx={X(cases)} cy={Y(lift)} r="17" fill="none" stroke={C.amber} strokeWidth="2" strokeDasharray="5 4" className="anim-pulse" />}
         <circle cx={X(cases)} cy={Y(lift)} r="9" fill={C.gold} stroke={C.ink} strokeWidth="2" />
       </svg>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -196,7 +339,7 @@ export function LiftCases() {
           <input id={`${uid}-cases`} type="range" min={10} max={300} step={10} value={cases} onChange={(e) => setCases(Number(e.target.value))} className="w-full accent-[#8A5A0B]" />
         </div>
       </div>
-      <Insight>
+      <Insight>{plain()}
         {act === "intervene"
           ? tt(`An uplift of ${lift}% on ${cases} conversions per group: clear and proven. Roll out, and hand it to the team that owns the channel.`, `Ein Uplift von ${lift} % bei ${cases} Conversions pro Gruppe: klar und belegt. Ausrollen, und dem Team übergeben, dem der Kanal gehört.`)
           : act === "watch"
@@ -209,60 +352,93 @@ export function LiftCases() {
   );
 }
 
-/* ------------------------------------------------------------------ B5 · Spree's architecture over six months */
+/* ------------------------------------------------------------------ B5 · how an architecture is built: Spree's recommender and its base */
 
-const I_ARCH = bi([
-  { id: "base", name: t("KPI system and test routine", "KPI-System und Test-Routine"), start: 1, owner: t("Head of Data", "Leitung Data"), trigger: t("If the three KPIs are not filled for 95% of customers by month 2, the recommender waits.", "Sind die drei KPIs bis Monat 2 nicht für 95 % der Kunden gefüllt, wartet die Empfehlung."), why: t("Starts first: every other item is measured by it.", "Startet zuerst: Jeder andere Punkt wird daran gemessen.") },
-  { id: "score", name: t("Upsell recommender", "Upsell-Empfehlung"), start: 2, owner: t("Head of Data", "Leitung Data"), trigger: t("If the upgrade rate is not at least 1.2 times the control group's on 100 upgrades per group by month 4, the model is retrained before any rollout.", "Liegt die Upgrade-Rate bis Monat 4 bei 100 Upgrades pro Gruppe nicht bei mindestens dem 1,2-Fachen der Kontrollgruppe, wird das Modell vor jedem Rollout neu trainiert."), why: t("Starts once the KPI system can measure it.", "Startet, sobald das KPI-System sie messen kann.") },
-  { id: "calls", name: t("Win-back e-mails", "Rückgewinnungs-E-Mails"), start: 3, owner: t("Head of Marketing", "Marketingleitung"), trigger: t("If unsubscribes rise above 0.5% in any month, the trigger with the most unsubscribes is paused.", "Steigen die Abmeldungen in einem Monat über 0,5 %, wird der Trigger mit den meisten Abmeldungen pausiert."), why: t("Starts when the first test routine has run once.", "Startet, wenn die erste Test-Routine einmal gelaufen ist.") },
-]);
+/**
+ * The worked example of Materi B5 on the example company Spree Systems (a Berlin software provider, Case assumption): a small version of the Route 2
+ * panel. Two controls set the same two facts the panel reads: does measurement start before the recommender, and is its data ready. The links in
+ * the picture break the way the panel's do, and "What this shows" says what the break means.
+ */
 export function ArchExample() {
-  const uid = useId().replace(/:/g, "");
-  const [sel, setSel] = useState("base");
-  const r = I_ARCH.find((x) => x.id === sel)!;
-  const X = (m: number) => 190 + (m - 1) * 60;
+  const [measFirst, setMeasFirstRaw] = useState(true);
+  const [ready, setReadyRaw] = useState(true);
+  const story = useStory([
+    {
+      title: tt("The base first", "Die Basis zuerst"),
+      say: tt("Spree Systems is an example company, not your case. It builds its KPI system and test routine first, so its recommender is measured from its first week.", "Spree Systems ist ein Beispielunternehmen, nicht Ihr Fall. Es baut zuerst sein KPI-System und seine Test-Routine, damit seine Empfehlung ab der ersten Woche gemessen wird."),
+      look: tt("the solid teal link between the recommender and the base", "die durchgezogene teal Verbindung zwischen Empfehlung und Basis"),
+      apply: () => {
+        setMeasFirstRaw(true);
+        setReadyRaw(true);
+      },
+    },
+    {
+      title: tt("The tool before the base", "Das Werkzeug vor der Basis"),
+      say: tt("Now the recommender starts first. Nothing measures it, so nobody can say whether it sells more. Its link is dashed.", "Jetzt startet die Empfehlung zuerst. Nichts misst sie, also kann niemand sagen, ob sie mehr verkauft. Ihre Verbindung ist gestrichelt."),
+      look: tt("the dashed amber link and the note on the recommender", "die gestrichelte amberfarbene Verbindung und der Vermerk an der Empfehlung"),
+      apply: () => {
+        setMeasFirstRaw(false);
+        setReadyRaw(true);
+      },
+    },
+    {
+      title: tt("The point", "Das Wichtigste"),
+      say: tt("Measured, but on data only 70% ready, the recommender would learn the gaps. Base first, then an engine on ready data. Try the two buttons.", "Gemessen, aber auf nur zu 70 % bereiten Daten würde die Empfehlung die Lücken lernen. Zuerst die Basis, dann eine Engine auf bereiten Daten. Probieren Sie die beiden Schaltflächen."),
+      look: tt("the data note under the recommender", "den Datenvermerk unter der Empfehlung"),
+      apply: () => {
+        setMeasFirstRaw(true);
+        setReadyRaw(false);
+      },
+    },
+  ]);
+  const setMeasFirst = (v: boolean) => {
+    story.leave();
+    setMeasFirstRaw(v);
+  };
+  const setReady = (v: boolean) => {
+    story.leave();
+    setReadyRaw(v);
+  };
+  const dataPct = ready ? 92 : 70;
+  const dataOk = dataPct >= 80;
   return (
     <div className="space-y-3">
-      <svg viewBox="0 0 560 170" className="mx-auto h-auto w-full max-w-[600px]" role="img" aria-labelledby={`${uid}-t ${uid}-d`}>
-        <title id={`${uid}-t`}>{tt("Spree's three funded items by start month", "Die drei finanzierten Punkte von Spree nach Startmonat")}</title>
-        <desc id={`${uid}-d`}>{I_ARCH.map((a) => `${a.name}: ${a.start}`).join(". ")}</desc>
-        {[1, 2, 3, 4, 5, 6].map((m) => (
-          <text key={m} x={X(m) + 30} y="14" textAnchor="middle" fontSize="11.5" fill={C.ash}>{`M${m}`}</text>
-        ))}
-        {I_ARCH.map((a, i) => {
-          const y = 24 + i * 44;
-          const on = a.id === sel;
-          return (
-            <g key={a.id} className="hit" role="button" tabIndex={0} aria-label={a.name} onClick={() => setSel(a.id)} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setSel(a.id)}>
-              <text x="4" y={y + 22} fontSize="12" fontWeight={on ? 800 : 600} fill={C.ink}>{a.name.length > 28 ? `${a.name.slice(0, 27)}…` : a.name}</text>
-              {[1, 2, 3, 4, 5, 6].map((m) => (
-                <rect key={m} className={m === a.start ? "hit-shape" : undefined} x={X(m) + 2} y={y + 6} width="56" height="24" rx="3" fill={m === a.start ? C.data : m > a.start ? C.tealSoft : C.paper} stroke={on && m === a.start ? C.amber : C.line} strokeWidth={on && m === a.start ? 2.5 : 1} />
-              ))}
-            </g>
-          );
-        })}
-      </svg>
+      <ThePoint>{tt("An architecture is built in order: the base first, then measurement, then the data, then the engines. Where a link in that chain is missing, the tool above it cannot be trusted.", "Eine Architektur wird der Reihe nach gebaut: zuerst die Basis, dann die Messung, dann die Daten, dann die Engines. Wo ein Glied dieser Kette fehlt, lässt sich dem Werkzeug darüber nicht trauen.")}</ThePoint>
+      <Story steps={story.plan} step={story.step} onStep={story.go} />
+      <div role="group" aria-label={tt("Spree's recommender and its base", "Die Empfehlung von Spree und ihre Basis")} className="mx-auto max-w-xl">
+        <div className="rounded-lg border border-dashed border-line bg-canvas px-3 py-1.5 text-center text-caption text-ash">{tt("What customers meet: upgrade offers in the portal", "Was Kunden erleben: Upgrade-Angebote im Portal")}</div>
+        <div className="my-1 flex h-7 items-center justify-center" aria-hidden />
+        <div className={clsx("rounded-lg border p-2 text-caption leading-snug", "border-signal bg-signalSoft")}>
+          <p className="font-semibold text-ink">{tt("Upsell recommender", "Upsell-Empfehlung")}</p>
+          <p className="text-ash">{tt(measFirst ? "Starts in month 1" : "Starts in month 1, before the base", measFirst ? "Startet in Monat 1" : "Startet in Monat 1, vor der Basis")}</p>
+          {!measFirst && <p className="text-accent">{tt("nothing measures it yet", "noch misst es nichts")}</p>}
+          {!dataOk && <p className="text-accent">{tt(`its data is ${dataPct}% ready, below 80%, when it starts`, `seine Daten sind zu ${dataPct} % bereit, unter 80 %, wenn es startet`)}</p>}
+        </div>
+        <div className={clsx("flex h-7 items-center justify-center gap-2 text-micro normal-case tracking-normal", measFirst ? "text-ash" : "text-accent")}>
+          <span aria-hidden className={clsx("block h-full w-0 border-l-[3px]", measFirst ? "border-solid border-signal" : "border-dashed border-gold")} />
+          <span>{measFirst ? tt("measured", "gemessen") : tt("not measured", "nicht gemessen")}</span>
+        </div>
+        <div className={clsx("rounded-lg border p-2 text-caption leading-snug", measFirst ? "border-signal bg-signalSoft" : "border-signal bg-signalSoft")}>
+          <p className="font-semibold text-ink">{tt("KPI system and test routine", "KPI-System und Test-Routine")}</p>
+          <p className="text-ash">{measFirst ? tt("Starts in month 1", "Startet in Monat 1") : tt("Starts in month 3, after the recommender", "Startet in Monat 3, nach der Empfehlung")}</p>
+        </div>
+        <div className="flex h-7 items-center justify-center gap-2 text-micro normal-case tracking-normal text-ash">
+          <span aria-hidden className="block h-full w-0 border-l-[3px] border-solid border-signal" />
+          <span>{tt("raw data flows up", "Rohdaten fließen nach oben")}</span>
+        </div>
+        <div className="rounded-lg border border-dashed border-line bg-canvas px-3 py-1.5 text-center text-caption text-ash">{tt(`Where the data lives: CRM and shop, ${dataPct}% of what the recommender needs is ready`, `Wo die Daten liegen: CRM und Shop, ${dataPct} % dessen, was die Empfehlung braucht, sind bereit`)}</div>
+      </div>
       <div className="space-y-1.5">
-        <p className="smallcaps">{tt("Read one item", "Einen Punkt lesen")}</p>
-        <Toggles<string> label={tt("Item", "Punkt")} value={sel} onChange={setSel} options={I_ARCH.map((a) => ({ id: a.id, label: a.name }))} />
+        <p className="smallcaps">{tt("Two things to change", "Zwei Dinge zum Ändern")}</p>
+        <Toggles<string> label={tt("Measurement starts", "Die Messung startet")} value={measFirst ? "first" : "after"} onChange={(v) => setMeasFirst(v === "first")} options={[{ id: "first", label: tt("Before the recommender", "Vor der Empfehlung") }, { id: "after", label: tt("After the recommender", "Nach der Empfehlung") }]} />
+        <Toggles<string> label={tt("Data behind the recommender", "Daten hinter der Empfehlung")} value={ready ? "ready" : "weak"} onChange={(v) => setReady(v === "ready")} options={[{ id: "ready", label: tt("92% ready", "92 % bereit") }, { id: "weak", label: tt("70% ready", "70 % bereit") }]} />
       </div>
-      <div className="rounded-lg border border-line bg-paper p-3.5 text-caption" aria-live="polite">
-        <p className="smallcaps">{r.name}</p>
-        <p className="mt-1">
-          <span className="font-semibold text-ink">Owner. </span>
-          {r.owner}
-        </p>
-        <p className="mt-1">
-          <span className="font-semibold text-ink">Trigger. </span>
-          <Gloss>{r.trigger}</Gloss>
-        </p>
-        <p className="mt-1 text-ash">{r.why}</p>
-      </div>
-      <Insight>
-        {tt(
-          "The KPI system and test routine start first, because every other item is measured by them. Each item has one owner who can change it alone and a trigger with a number, a date and an action. Spree left out a vendor's all-in AI suite on purpose: a system nobody at Spree can explain or measure cannot be steered.",
-          "KPI-System und Test-Routine starten zuerst, weil jeder andere Punkt daran gemessen wird. Jeder Punkt hat einen Owner, der ihn allein ändern kann, und einen Trigger mit Zahl, Datum und Aktion. Spree hat die All-in-KI-Suite eines Anbieters bewusst weggelassen: Ein System, das bei Spree niemand erklären oder messen kann, lässt sich nicht steuern.",
-        )}
+      <Insight>{plain()}
+        {measFirst && dataOk
+          ? tt("The base exists before the tool and the tool runs on data that is ready. Spree can say whether the recommender sells more, and its data does not teach it gaps. This is what a plan that holds looks like.", "Die Basis steht vor dem Werkzeug, und das Werkzeug läuft auf bereiten Daten. Spree kann sagen, ob die Empfehlung mehr verkauft, und ihre Daten lehren sie keine Lücken. So sieht ein Plan aus, der hält.")
+          : !measFirst
+            ? tt("The recommender starts before anything can measure it. Its link to the base is dashed: Spree would pay for a tool and never know whether it works. The fix is the order: the KPI system and the test routine first.", "Die Empfehlung startet, bevor etwas sie messen kann. Ihre Verbindung zur Basis ist gestrichelt: Spree würde für ein Werkzeug zahlen und nie wissen, ob es wirkt. Die Lösung ist die Reihenfolge: zuerst KPI-System und Test-Routine.")
+            : tt("It is measured, but its data is only 70% ready, below the 80% an engine should start on. It would learn the gaps. The fix is to clean the data first, or to hold the engine back until it is ready.", "Sie wird gemessen, aber ihre Daten sind nur zu 70 % bereit, unter den 80 %, auf denen eine Engine starten sollte. Sie würde die Lücken lernen. Die Lösung ist, zuerst die Daten zu bereinigen oder die Engine zurückzuhalten, bis sie bereit sind.")}
       </Insight>
     </div>
   );

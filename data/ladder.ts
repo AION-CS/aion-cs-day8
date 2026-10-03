@@ -110,3 +110,16 @@ export const LEVEL_TESTS = bi([
   { name: t("Recommendation or communication?", "Empfehlung oder Kommunikation?"), test: t("Ask what changes between two customers. If it is the product suggested, it is a recommendation; if it is the message, its timing or its channel, it is communication.", "Fragen Sie, was sich zwischen zwei Kunden ändert. Ist es das vorgeschlagene Produkt, ist es eine Empfehlung; ist es die Nachricht, ihr Zeitpunkt oder ihr Kanal, ist es Kommunikation.") },
   { name: t("Communication or automation?", "Kommunikation oder Automatisierung?"), test: t("An e-mail sent on a trigger is still communication. It becomes automation when the machine does the work a person did: answering, pricing, rearranging the offer.", "Eine E-Mail auf einen Auslöser ist immer noch Kommunikation. Automatisierung wird es, wenn die Maschine die Arbeit eines Menschen macht: antworten, Preise setzen, das Angebot umstellen.") },
 ]);
+
+/** The decisive phrase inside each idea's own text, for "Highlight the key words" (never which kind it points to). */
+export const LINE_KEY: Record<string, string> = bi({
+  l1: t("also bought the archive add-on", "kauften auch das Archiv-Add-on"),
+  l2: t("that most customers of that size bought next", "das die meisten Kunden dieser Größe als Nächstes kauften"),
+  l3: t("from what similar customers bought after their first year", "aus dem, was ähnliche Kunden nach ihrem ersten Jahr kauften"),
+  l4: t("depending on which topics each reader opens", "je nachdem, welche Themen jeder Leser öffnet"),
+  l5: t("from their own contact person", "von seiner eigenen Ansprechperson"),
+  l6: t("to the month in which the customer usually approves budgets", "auf den Monat legen, in dem der Kunde üblicherweise Budgets freigibt"),
+  l7: t("answers password and licence questions at any hour", "beantwortet Passwort- und Lizenzfragen zu jeder Uhrzeit"),
+  l8: t("adjusts to the order size and the season", "passt sich der Bestellmenge und der Saison an"),
+  l9: t("rearranges its tiles by itself", "ordnet ihre Kacheln selbst neu"),
+});

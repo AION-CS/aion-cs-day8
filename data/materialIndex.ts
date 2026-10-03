@@ -4,21 +4,28 @@ import { TASK1_MINUTES, TASK2_MINUTES } from "@/lib/routes";
 /** One registry for every material card: the rail, the cards and the task chips all read it. */
 export type MaterialId = "A1" | "A2" | "A3" | "A4" | "A5" | "A6" | "A7" | "B1" | "B2" | "B3" | "B4" | "B5";
 export type Block = "A" | "B";
-export type MaterialMeta = { id: MaterialId; block: Block; title: string; minutes: number };
+export type MaterialMeta = { id: MaterialId; block: Block; title: string; minutes: number; optional?: boolean };
 
-/** Day 8: Materi A (Route 1, Levels 1 and 2) seven cards, 60 minutes; Materi B (Route 2, Level 3) five cards, 60 minutes. */
+/**
+ * Day 8: Materi A (Route 1, Levels 1 and 2) seven cards, 60 minutes; Materi B (Route 2, Level 3) five cards, 60 minutes.
+ *
+ * `optional: true` marks a card that no Core task block (lib/progress.ts OPTIONAL_BLOCKS) draws on: collapsed by default via
+ * OptionalSection, one click to open, never removed (CLAUDE.md #35). A card a Core block needs stays Core even if an Optional block also
+ * cites it. Route 1: Core blocks 1.1 (A2, A3), 1.3 (A3), 2.1 (A5) and 2.4 (A1, A7) draw on A1, A2, A3, A5 and A7; A4 (reading a pilot) is
+ * used by Optional 1.2 and A6 (A/B testing) by Optional 2.3.
+ */
 export const MATERIALS: MaterialMeta[] = bi([
   { id: "A1" as MaterialId, block: "A" as Block, title: t("AI in customer retention: value or technology without strategy", "KI in der Kundenbindung: Mehrwert oder Technologie ohne Strategie"), minutes: 7 },
   { id: "A2" as MaterialId, block: "A" as Block, title: t("Recommendation systems and individualised communication", "Recommendation Systems und individualisierte Kommunikation"), minutes: 9 },
   { id: "A3" as MaterialId, block: "A" as Block, title: t("Automation in sales: chatbots, dynamic pricing, adaptive systems", "Automatisierung im Vertrieb: Chatbots, Dynamic Pricing, adaptive Systeme"), minutes: 9 },
-  { id: "A4" as MaterialId, block: "A" as Block, title: t("Reading a pilot: conversion rate, uplift and extra revenue", "Einen Pilot lesen: Conversion Rate, Uplift und zusätzlicher Umsatz"), minutes: 10 },
+  { id: "A4" as MaterialId, block: "A" as Block, title: t("Reading a pilot: conversion rate, uplift and extra revenue", "Einen Pilot lesen: Conversion Rate, Uplift und zusätzlicher Umsatz"), minutes: 10, optional: true },
   { id: "A5" as MaterialId, block: "A" as Block, title: t("KPIs that steer: outcome, driver, guardrail and vanity metrics", "KPIs, die steuern: Outcome, Treiber, Guardrail und Vanity Metrics"), minutes: 8 },
-  { id: "A6" as MaterialId, block: "A" as Block, title: t("A/B testing: a fair test and what it cannot tell you", "A/B-Testing: ein fairer Test und was er nicht sagen kann"), minutes: 9 },
+  { id: "A6" as MaterialId, block: "A" as Block, title: t("A/B testing: a fair test and what it cannot tell you", "A/B-Testing: ein fairer Test und was er nicht sagen kann"), minutes: 9, optional: true },
   { id: "A7" as MaterialId, block: "A" as Block, title: t("Prioritising measures: effect, measurability, scalability", "Maßnahmen priorisieren: Wirkung, Messbarkeit, Skalierbarkeit"), minutes: 8 },
-  { id: "B1" as MaterialId, block: "B" as Block, title: t("An AI-based control system: the target vision", "Ein KI-gestütztes Steuerungssystem: das Zielbild"), minutes: 12 },
-  { id: "B2" as MaterialId, block: "B" as Block, title: t("Choosing technologies: the KPI first, then the tool", "Technologien wählen: zuerst der KPI, dann das Werkzeug"), minutes: 12 },
-  { id: "B3" as MaterialId, block: "B" as Block, title: t("A KPI system for management: four tests", "Ein KPI-System für das Management: vier Tests"), minutes: 12 },
-  { id: "B4" as MaterialId, block: "B" as Block, title: t("Continuous optimisation: roll out, keep testing or stop", "Laufende Optimierung: ausrollen, weiter testen oder stoppen"), minutes: 12 },
+  { id: "B1" as MaterialId, block: "B" as Block, title: t("An AI-based control system: the target vision", "Ein KI-gestütztes Steuerungssystem: das Zielbild"), minutes: 12, optional: true },
+  { id: "B2" as MaterialId, block: "B" as Block, title: t("Choosing technologies: the KPI first, then the tool", "Technologien wählen: zuerst der KPI, dann das Werkzeug"), minutes: 12, optional: true },
+  { id: "B3" as MaterialId, block: "B" as Block, title: t("A KPI system for management: four tests", "Ein KPI-System für das Management: vier Tests"), minutes: 12, optional: true },
+  { id: "B4" as MaterialId, block: "B" as Block, title: t("Continuous optimisation: roll out, keep testing or stop", "Laufende Optimierung: ausrollen, weiter testen oder stoppen"), minutes: 12, optional: true },
   { id: "B5" as MaterialId, block: "B" as Block, title: t("A technology decision under uncertainty, and the architecture", "Eine Technologieentscheidung unter Unsicherheit, und die Architektur"), minutes: 12 },
 ]);
 

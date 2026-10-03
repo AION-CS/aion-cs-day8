@@ -165,3 +165,19 @@ export const AB_MODEL = { change: "one", control: "random", kpi: "conv", size: "
 export const hasHypothesis = (s: string) => /\b(if|wenn|falls)\b/i.test(s) && /\b(because|since|as|weil|da|denn)\b/i.test(s);
 /** A decision rule names a number to decide by. */
 export const hasRuleNumber = (s: string) => /\d/.test(s);
+
+/** The decisive phrase inside each metric's own text, for "Highlight the key words" (never which kind it points to). */
+export const REC_KEY: Record<string, string> = bi({
+  p01: t("orders ÷ e-mails delivered", "Bestellungen ÷ zugestellte E-Mails"),
+  p02: t("revenue per customer per year", "Umsatz pro Kunde und Jahr"),
+  p03: t("share of customers who renew their contract", "Anteil der Kunden, die ihren Vertrag verlängern"),
+  p04: t("share of customers who use the portal at least once a week", "Anteil der Kunden, die das Portal mindestens einmal pro Woche nutzen"),
+  p05: t("Click rate on recommended add-ons", "Klickrate auf empfohlene Add-ons"),
+  p06: t("use a second module within 90 days", "innerhalb von 90 Tagen ein zweites Modul nutzen"),
+  p07: t("Unsubscribe rate", "Abmelderate"),
+  p08: t("Complaints about the chatbot", "Beschwerden über den Chatbot"),
+  p09: t("handed to a person without an answer", "ohne Antwort an einen Menschen übergeben"),
+  p10: t("E-mails sent per month", "Versendete E-Mails pro Monat"),
+  p11: t("Followers of AIConnect's LinkedIn page", "Follower der LinkedIn-Seite"),
+  p12: t("Number of dashboards the data team has built", "Anzahl der Dashboards, die das Datenteam gebaut hat"),
+});

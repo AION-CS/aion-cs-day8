@@ -5,19 +5,15 @@ import { BUDGET, EVIDENCE_LABEL, MEASURES, MODEL_COST, MODEL_MEASURES, PROBLEM_L
 import {
   ACTION_LABEL,
   ARCH_BY_ID,
+  ARCH_IDS,
   COMPS,
   COMP_BY_ID,
   CRIT_IDS,
   DECISIONS,
-  KPIS,
   LOGIC_OWNER_LABEL,
-  MODEL_ARCH,
   MODEL_COMPS,
   MODEL_DECISION,
   MODEL_GREATEST,
-  MODEL_TRIPWIRE,
-  OWNERS,
-  OWNER_ACCEPT,
   OWNER_ACCEPT_LOGIC,
   PRINCIPLES,
   PRINCIPLE_IDS,
@@ -31,6 +27,8 @@ import {
   useOf,
 } from "@/data/route2";
 import type { ArchId } from "@/data/route2";
+import { MODEL_ARCH, MODEL_TIER, PANEL, TIER_LABEL } from "@/data/route2Panel";
+import { rangeOf } from "@/lib/r2Panel";
 import { MODEL_ORDER } from "@/data/mentorKey";
 import { euro } from "@/lib/lang";
 
@@ -237,42 +235,33 @@ export function logicKey(): AnswerKeyBlock {
   };
 }
 
-export function ownerKey(funded: ArchId[]): AnswerKeyBlock {
-  const ids = funded.length ? funded : MODEL_ARCH;
+export function architectureKey(): AnswerKeyBlock {
+  const spent = MODEL_ARCH.reduce((x, id) => x + ARCH_BY_ID[id].cost, 0);
+  const alt = { ...MODEL_TIER, pricing: "later" as const, trigger: "not" as const };
+  const altSpent = ARCH_IDS.filter((id) => alt[id] !== "not").reduce((x, id) => x + ARCH_BY_ID[id].cost, 0);
+  const why: Record<ArchId, string> = {
+    foundation: "Now. Every other item is measured by it; it starts in month 1, no later than the first engine (the test “measurement comes first”).",
+    abtest: "Now. Every engine is compared with a control group from its first week; it needs the KPI system to read from.",
+    training: "Now. €20,000 for 3 weeks so people read the dashboard correctly. A defensible cut if the learner needs the room, and then the reading says so.",
+    quality: "Now. It prepares the price and knowledge data. With dynamic pricing left out it is there for a later pilot, which a learner may argue is not worth €20,000 yet.",
+    reco: "Now. Its data is 92% ready (77% if the data is weaker: it then rests on data below 80%, which is why Step B asks what the learner watches).",
+    trigger: "Now. 95% ready (80% if weaker, still on the bar); it moves weekly active customers and is measured from month 1.",
+    pricing: `Not now, or After data. Its data is only 40% ready. With the clean-up Now, After data starts it in month 3 and in use in month 6; the plan is then ${euro(altSpent)} if it replaces the triggered e-mails, and over the budget if it is added to the model set.`,
+    suite: "Not now. A black box: nothing it moves is named, its results are not shown, and €90,000 would take the plan over the budget. Two tests open (every funded item has a purpose; budget).",
+  };
   return {
-    title: "Block 3.5 · Owners, sequence and funding",
-    expected: `Model: ${MODEL_ARCH.map((id) => `${ARCH_BY_ID[id].name} (${OWNERS[OWNER_ACCEPT[id][0]].name})`).join(", ")} · ${euro(MODEL_ARCH.reduce((s, id) => s + ARCH_BY_ID[id].cost, 0))}`,
-    options: ids.map((id) => ({
-      label: `${ARCH_BY_ID[id].name} → ${OWNER_ACCEPT[id].map((o) => OWNERS[o].name).join(" or ")}`,
-      expected: true,
-      why:
-        id === "foundation"
-          ? "Head of Data (or IT, who owns the interfaces). It starts first: every other item is measured by it."
-          : id === "suite"
-            ? "A black box: nobody at AIConnect can explain or measure it. Funding it breaks the third rule; the check flags it."
-            : id === "pricing"
-              ? "Its price data is only 40% ready (Block 3.2: data first), and €50,000 would push the plan over."
-              : `The owner who can change it without asking anyone: ${OWNERS[OWNER_ACCEPT[id][0]].profile}`,
-    })),
-    teachingNote: `The check tests three rules: the KPI system starts no later than the first other item, total within ${euro(R2_BUDGET)}, nothing funded is a black box. Owners are not checked by the app; use this key. Leaving out the training instead of the data clean-up defends if the learner argues that the chatbot and pricing will not come this half-year anyway.`,
+    title: "Step A · The architecture: when does each item happen?",
+    expected: `Model: Now ${MODEL_ARCH.map((id) => PANEL[id].short).join(", ")} (${euro(spent)} of ${euro(R2_BUDGET)}) · Not now ${ARCH_IDS.filter((id) => MODEL_TIER[id] === "not").map((id) => PANEL[id].short).join(", ")}`,
+    options: ARCH_IDS.map((id) => ({ label: `${PANEL[id].short} → ${TIER_LABEL[MODEL_TIER[id]]}`, expected: MODEL_TIER[id] !== "not", why: why[id] })),
+    teachingNote: `The panel shows four tests as facts, none a verdict, and the learner decides. A different, well-reasoned set is acceptable (CLAUDE.md #38): for example dynamic pricing After data with the triggered e-mails left out (${euro(altSpent)}), or going over the budget with a reason. Doing nothing (no item Now) is incomplete, not wrong: the missing list asks for at least one. The model set holds all four tests in the brief's data and opens the data test when the data is 15 points weaker (the recommendation engine, ${rangeOf({ tier: MODEL_TIER }).risk[1]}% of the money at risk).`,
   };
 }
 
 export function decisionKey(): AnswerKeyBlock {
   return {
-    title: "Block 3.6 · The technology decision",
+    title: "Step B · The technology decision",
     expected: DECISIONS.find((d) => d.id === MODEL_DECISION)!.label,
     options: DECISIONS.map((d) => ({ label: d.label, expected: d.id !== "wait", why: d.id === MODEL_DECISION ? d.why : d.id === "commit" ? `${d.why} ${d.rejected}` : d.rejected })),
-    teachingNote: "“Buy the suite” and “Stage it” are both decisions, with different reasoning; the check outlines only “Wait”, because the brief asks for a technology decision despite an unclear forecast. Push a learner who buys the suite on how they would measure it.",
-  };
-}
-
-export function tripKey(): AnswerKeyBlock {
-  const k = KPIS.find((x) => x.id === MODEL_TRIPWIRE.kpi)!;
-  return {
-    title: "Block 3.6 · The tripwire",
-    expected: `${k.label} ≥ ${MODEL_TRIPWIRE.threshold}% by month ${MODEL_TRIPWIRE.month}, else adjust one rule`,
-    options: KPIS.map((x) => ({ label: `${x.label} (baseline ${x.baseline}${x.unit === "%" ? "%" : ` ${x.unit}`})`, expected: x.behaviour, why: x.behaviour ? "How customers behave: the result the system is meant to move." : "Counts AIConnect's own output, not how customers responded." })),
-    teachingNote: "Any customer metric with a threshold better than its baseline defends. E-mails sent is the tempting one: it rises with every trigger and says nothing about whether customers bought.",
+    teachingNote: "“Buy the suite” and “Stage it” are both decisions, with different reasoning; the plan rejects only “Wait”, because the brief asks for a technology decision despite an unclear forecast: no study makes a forecast clear without a test, and the standard communication continues meanwhile. All three stay selectable. The panel shows one plain hint when the decision and Step A disagree (wait while Step A builds; buy the suite while Step A leaves it out) and the learner explains the contradiction in their reason. Push a learner who buys the suite on how they would measure it.",
   };
 }

@@ -1,17 +1,23 @@
 "use client";
 
-import { Block31, Block32, Block33, Block34, Block35, Block36 } from "@/components/task2/Blocks";
+import { useState } from "react";
+import { Block31, Block32, Block33, Block34 } from "@/components/task2/Blocks";
 import { MemoPanel } from "@/components/task2/MemoPanel";
+import { Panel } from "@/components/task2/Panel";
+import { StepA } from "@/components/task2/StepA";
+import { StepB } from "@/components/task2/StepB";
+import { TodayTable } from "@/components/task2/Kits";
 import { ExportBar } from "@/components/ui/ExportBar";
 import { Callout } from "@/components/ui/MaterialCard";
+import { OptionalSection } from "@/components/ui/OptionalSection";
 import { MEASURE_BY_ID } from "@/data/measures";
-import { PATTERNS, PATTERN_IDS, RISK_LABEL } from "@/data/patterns";
 import { R2_BUDGET, R2_MONTHS } from "@/data/route2";
 import { Gloss } from "@/lib/glossify";
 import { euro, tt } from "@/lib/lang";
 import { memoBody } from "@/lib/exportDoc";
 import { r2Missing } from "@/lib/missing";
-import { TASK2_MINUTES } from "@/lib/routes";
+import type { Scn } from "@/lib/r2Panel";
+import { BLOCK_MINUTES, TASK2_MINUTES } from "@/lib/routes";
 import { exportName } from "@/lib/slug";
 import { useJumpTo } from "@/lib/useJumpTo";
 import { usePersisted } from "@/store/usePersisted";
@@ -22,9 +28,8 @@ function CaseBrief() {
   const hydrated = useHydrated();
   const p = usePersisted();
   const jump = useJumpTo();
-  const risks = PATTERN_IDS.filter((x) => p.l1.rows[x].risk).map((x) => `${PATTERNS[x].label} (${RISK_LABEL[p.l1.rows[x].risk!]})`);
   const chosen = p.l1.chosen.map((id) => MEASURE_BY_ID[id].name);
-  const has = hydrated && (risks.length > 0 || chosen.length > 0);
+  const has = hydrated && chosen.length > 0;
   return (
     <section id="task-2" aria-labelledby="task2-h" className="card space-y-3 p-4 md:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -51,7 +56,7 @@ function CaseBrief() {
               {tt("Time: ", "Zeit: ")}
               <strong>{tt(`${R2_MONTHS} months`, `${R2_MONTHS} Monate`)}</strong>
             </li>
-            <li>{tt("The technologies are in Block 3.2, the KPI candidates in Block 3.3, the test results in Block 3.4, the items and costs in Block 3.5, the baselines in Block 3.6.", "Die Technologien stehen in Block 3.2, die KPI-Kandidaten in Block 3.3, die Testergebnisse in Block 3.4, die Punkte und Kosten in Block 3.5, die Ausgangswerte in Block 3.6.")}</li>
+            <li>{tt("The items and their costs are in Step A; the numbers today are in the table below.", "Die Punkte und ihre Kosten stehen in Schritt A; die Zahlen heute stehen in der Tabelle darunter.")}</li>
           </ul>
         </div>
         <div className="rounded-lg border border-line bg-canvas p-3 text-caption md:col-span-2">
@@ -66,19 +71,19 @@ function CaseBrief() {
           </ol>
         </div>
       </div>
+      <TodayTable />
       <div role="note" className="rounded-lg border border-gold bg-accentSoft p-3 text-caption text-ink" id="task1-quote">
         <p className="smallcaps text-accent">{tt("Where Route 1 left off · your own answers", "Wo Route 1 aufgehört hat · Ihre eigenen Antworten")}</p>
         {has ? (
           <p className="mt-1">
-            {tt("Link to customer value per kind of metric: ", "Verbindung zum Kundenwert pro Art von Kennzahl: ")}
-            <strong>{risks.join(", ") || tt("none yet", "noch keines")}</strong>. {tt("Measures you chose: ", "Von Ihnen gewählte Maßnahmen: ")}
-            <strong>{chosen.join(", ") || tt("none yet", "noch keine")}</strong>.
+            {tt("Measures you chose in Route 1: ", "Von Ihnen in Route 1 gewählte Maßnahmen: ")}
+            <strong>{chosen.join(", ")}</strong>.
           </p>
         ) : (
           <p className="mt-1">{tt("You have not answered Route 1 yet. That is fine: nothing here is blocked, and this box fills in when you do.", "Sie haben Route 1 noch nicht beantwortet. Das ist in Ordnung: Hier ist nichts gesperrt, und dieses Feld füllt sich, sobald Sie es tun.")}</p>
         )}
-        <button type="button" onClick={() => jump("block-2-2", "/route-1/")} className="btn-ghost btn-sm mt-2">
-          {tt("Go to Block 2.2 in Route 1", "Zu Block 2.2 in Route 1")}
+        <button type="button" onClick={() => jump("block-2-4", "/route-1/")} className="btn-ghost btn-sm mt-2">
+          {tt("Go to Block 2.4 in Route 1", "Zu Block 2.4 in Route 1")}
         </button>
       </div>
       <Callout label={tt("Case assumption", "Fallannahme")} tone="amber">
@@ -95,32 +100,71 @@ function CaseBrief() {
 
 export function Task2() {
   const p = usePersisted();
+  const [scn, setScn] = useState<Scn>(0);
   const missing = r2Missing(p);
   const filename = exportName(p.participant.name, "l3-control-system-memo");
   return (
     <div className="space-y-6">
       <CaseBrief />
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
-        <div className="min-w-0 space-y-6 pb-14 lg:pb-0">
-          <Block31 />
-          <Block32 />
-          <Block33 />
-          <Block34 />
-          <Block35 />
-          <Block36 />
-          <ExportBar
-            id="export-l3"
-            previewTitle={tt("Preview of your memo", "Vorschau Ihres Memos")}
-            exportLabel={tt("Export the Control System Memo", "Control System Memo exportieren")}
-            docTitle="Control System Memo"
-            filename={filename}
-            missing={missing}
-            buildBody={() => memoBody(p)}
-            showPreview={false}
-          />
-        </div>
-        <MemoPanel />
+      <div id="r2-frame" className="space-y-4">
+        <Panel scn={scn} setScn={setScn} />
+        <StepA scn={scn} />
+        <StepB scn={scn} />
       </div>
+      <section id="go-deeper" aria-labelledby="go-deeper-h" className="space-y-3">
+        <div className="space-y-1">
+          <h2 id="go-deeper-h">{tt("Go deeper · optional", "Vertiefen · optional")}</h2>
+          <p className="max-w-prose text-caption text-ash">
+            {tt(
+              "Four blocks that each practise one part of the plan: the principles of the vision, the selection of technologies, the KPI system, and roll out, keep testing or stop. They are folded: nothing in Step A or Step B needs them, and they are not counted in the progress ring or the missing list. Open one any time.",
+              "Vier Blöcke, die je einen Teil des Plans üben: die Prinzipien des Zielbilds, die Auswahl der Technologien, das KPI-System, und ausrollen, weiter testen oder stoppen. Sie sind eingeklappt: Nichts in Schritt A oder Schritt B braucht sie, und sie zählen nicht im Fortschrittsring oder in der Liste des Offenen. Öffnen Sie einen jederzeit.",
+            )}
+          </p>
+        </div>
+        <OptionalSection
+          id="block-3-1"
+          title={tt("Block 3.1 · The target vision of an AI-based retention system", "Block 3.1 · Das Zielbild eines KI-gestützten Bindungssystems")}
+          minutes={BLOCK_MINUTES["3.1"]}
+          reason={tt("Names the principles behind an AI-based control system; Step A asks for your vision without them.", "Benennt die Prinzipien hinter einem KI-gestützten Steuerungssystem; Schritt A fragt Ihr Zielbild auch ohne sie ab.")}
+        >
+          <Block31 />
+        </OptionalSection>
+        <OptionalSection
+          id="block-3-2"
+          title={tt("Block 3.2 · Selection of relevant technologies", "Block 3.2 · Auswahl relevanter Technologien")}
+          minutes={BLOCK_MINUTES["3.2"]}
+          reason={tt("Sorts eight technologies into select now, data first or not now; Step A prints the figures it needs itself.", "Sortiert acht Technologien in jetzt auswählen, erst die Daten oder jetzt nicht; Schritt A druckt die Zahlen, die er braucht, selbst.")}
+        >
+          <Block32 />
+        </OptionalSection>
+        <OptionalSection
+          id="block-3-3"
+          title={tt("Block 3.3 · A KPI system for management", "Block 3.3 · Ein KPI-System für das Management")}
+          minutes={BLOCK_MINUTES["3.3"]}
+          reason={tt("Rates KPI candidates on four tests; Step B prints the customer figures it uses, so the decision does not need the ratings.", "Bewertet KPI-Kandidaten nach vier Tests; Schritt B druckt die Kundenzahlen, die er nutzt, die Entscheidung braucht die Bewertungen also nicht.")}
+        >
+          <Block33 />
+        </OptionalSection>
+        <OptionalSection
+          id="block-3-4"
+          title={tt("Block 3.4 · Continuous optimisation: roll out, keep testing or stop", "Block 3.4 · Laufende Optimierung: ausrollen, weiter testen oder stoppen")}
+          minutes={BLOCK_MINUTES["3.4"]}
+          reason={tt("Decides roll out, keep testing or stop for six A/B results; Step B asks only when you would stop.", "Entscheidet für sechs A/B-Ergebnisse über Ausrollen, Weitertesten oder Stoppen; Schritt B fragt nur, wann Sie aufhören würden.")}
+        >
+          <Block34 />
+        </OptionalSection>
+      </section>
+      <MemoPanel />
+      <ExportBar
+        id="export-l3"
+        previewTitle={tt("Preview of your memo", "Vorschau Ihres Memos")}
+        exportLabel={tt("Export the Control System Memo", "Control System Memo exportieren")}
+        docTitle="Control System Memo"
+        filename={filename}
+        missing={missing}
+        buildBody={() => memoBody(p)}
+        showPreview={false}
+      />
     </div>
   );
 }
