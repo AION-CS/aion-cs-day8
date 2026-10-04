@@ -59,10 +59,10 @@ architecture, not a fixed risk level. Interactive sketches of the versions below
    below 80% when it starts", "nothing measures it yet", "black box: nobody can see inside", "after data is ready". Links are solid when they work and
    dashed amber with a text reason when they do not. Colour is never the only channel (dashes and words).
 2. **Three range bars** (no more axes, by the user's choice), each with one plain sentence:
-   - **Budget:** money on Now items against EUR 220,000 (a dashed limit line). Over the line is a hint, never a block.
-   - **Measurable:** share of the Now money that sits on items that name a KPI, are measured (the KPI system and the A/B routine are both Now) and
-     whose data is at least 80% ready (or that need no data). The black box never counts.
-   - **Risk:** share of the Now money that rests on a black box or on data below 80% ready. The data clean-up lifts dynamic pricing to ready
+   - **Budget:** money on every funded item (Now and After data is ready) against EUR 220,000 (a dashed limit line). Over the line is a hint, never a block.
+   - **Measurable:** share of the funded money that sits on items that are measured (the KPI system and the A/B routine start no later than the item), whose data is at least 80% ready
+     (or that need none), and that are not a black box. The measurement items themselves count when they are in place.
+   - **Risk:** share of the funded money that rests on a black box or on data below 80% ready. The data clean-up lifts dynamic pricing to ready
      (interpretation, see below).
    - Measurable and Risk are **ranges**: the pale band spans the two data scenarios, a bold marker shows the active one. A single number would
      pretend a certainty the plan's additional requirement says does not exist.
@@ -155,7 +155,21 @@ bottom, Hide / Show, #39). The Export (never locked, #3). Over budget or against
 5. 1280 px and 390 px: the diagram and bars do not overflow and the choices stay reachable; EN and DE.
 6. Old-shape blob loads without error. Mentor fill gives an empty missing list. `npm run typecheck`, `verify:calc`, `build` (dev server stopped).
 
-## Open interpretations and decisions to confirm before building
+## Changes after the first build (2026-10-04) and what is still open
+
+Built and verified (typecheck, `verify:calc` 313 checks, production build in a scratch copy, browser):
+
+- **The four tests are hidden until asked for.** One button, "Show the four tests · 2 of 4 hold" (`store/useR2Tests.ts`, session-only). Any clue chip that points at the tests opens them first.
+- **Boxes and cards link both ways.** Every diagram box is a button ("Change when it happens ↓") that scrolls to and flashes its card in Step A; each card has "See it in the diagram ↑".
+- **Item sentences are number-neutral** ("Triggered e-mails: starts in month 1, …"), because one item name is plural; the German follows.
+- **The staged decision's label no longer mentions a tripwire** ("Decide now, build in stages, and watch one figure"); the tripwire is gone from Core.
+- **CLAUDE.md #47 was rewritten as a reusable pattern** for other days (the form, the panel, the reading and the categories, numbers and material, a procedure "How to carry this to another day", and the coverage check).
+
+**Open (proposed to the user, not built):** make the measurement link three-level so that skipping the A/B routine reads as a weaker approach and not as a break. Solid teal: measured against a control
+group (counted full). Dashed teal: only the KPI system, measured before and after (season and other changes cannot be separated; counted half, the scale of Materi A7: 3, 2, 1). Dashed amber: not measured.
+Such a plan stays category 2 ("a better approach exists") and still exports with a reason. Today the link is two-level: with no A/B routine an engine's link is dashed amber and the measurement test is open.
+
+## Open interpretations and decisions (settled as built unless marked open)
 
 1. **Time (the main open decision).** The built Route 2 has a start month per item, printed weeks to be in use, and rules (measurement starts no
    later than the first other item; month = start + weeks / 4, rounded up; nothing later than month 6). The redesign has only the three tiers and no

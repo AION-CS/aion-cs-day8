@@ -6,9 +6,11 @@ import { ARCH_BY_ID, R2_BUDGET, R2_MONTHS } from "@/data/route2";
 import type { ArchId } from "@/data/route2";
 import { PANEL, READY_BAR, WEAK_POINTS } from "@/data/route2Panel";
 import { euro, tt } from "@/lib/lang";
+import { scrollToAndFlash } from "@/lib/flash";
 import { IDS } from "@/lib/missing";
 import { planOf, rangeOf } from "@/lib/r2Panel";
 import type { ItemView, Scn } from "@/lib/r2Panel";
+import { useR2Tests } from "@/store/useR2Tests";
 import { useStore } from "@/store/useStore";
 
 /**
@@ -32,18 +34,25 @@ function Box({ id, v }: { id: ArchId; v: ItemView }) {
           : tt(`After data is ready · starts month ${v.start}, in use month ${v.inUse}`, `Wenn die Daten bereit sind · Start Monat ${v.start}, im Einsatz ab Monat ${v.inUse}`)
         : tt("Not now", "Jetzt nicht");
   return (
-    <div id={`arch-box-${id}`} className={clsx("min-h-[3.5rem] rounded-lg border p-2 text-caption leading-snug", cls)}>
-      <p className="font-semibold text-ink">
+    <button
+      type="button"
+      id={`arch-box-${id}`}
+      onClick={() => scrollToAndFlash(IDS.arch(id), "ref", "start")}
+      aria-label={tt(`${p.short}: go to its card in Step A to change when it happens`, `${p.short}: zur Karte in Schritt A, um zu ändern, wann es stattfindet`)}
+      className={clsx("block min-h-[3.5rem] w-full rounded-lg border p-2 text-left text-caption leading-snug hover:border-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent", cls)}
+    >
+      <span className="block font-semibold text-ink">
         {p.blackBox && v.tier !== "not" ? "? " : ""}
         {p.short} <span className="font-normal text-ash">· {euro(a.cost)}</span>
-      </p>
-      <p className="text-ash">{status}</p>
+      </span>
+      <span className="block text-ash">{status}</span>
       {v.notes.map((n) => (
-        <p key={n} className="text-accent">
+        <span key={n} className="block text-accent">
           {n}
-        </p>
+        </span>
       ))}
-    </div>
+      <span className="mt-0.5 block text-micro normal-case tracking-normal text-ash underline decoration-dotted underline-offset-2">{tt("Change when it happens ↓", "Ändern, wann es stattfindet ↓")}</span>
+    </button>
   );
 }
 
@@ -81,6 +90,8 @@ function RangeBar({ label, lo, hi, cur, tone, sentence }: { label: string; lo: n
 
 export function Panel({ scn, setScn }: { scn: Scn; setScn: (s: Scn) => void }) {
   const r2 = useStore((s) => s.r2);
+  const open = useR2Tests((s) => s.open);
+  const setOpen = useR2Tests((s) => s.setOpen);
   const plan = planOf(r2, scn);
   const rng = rangeOf(r2);
   const it = plan.items;
@@ -106,8 +117,8 @@ export function Panel({ scn, setScn }: { scn: Scn; setScn: (s: Scn) => void }) {
   const insight = none
     ? tt("Nothing is funded yet. Set an item to Now in Step A and the diagram, the three bars and the tests draw it.", "Noch nichts ist finanziert. Setzen Sie in Schritt A einen Punkt auf „Jetzt“, und Diagramm, drei Balken und Tests zeichnen es.")
     : tt(
-        `${plan.holding} of ${plan.applicable} tests hold${scn === 1 ? ` with the data ${WEAK_POINTS} points weaker` : ""}. ${plan.holding === plan.applicable ? "Nothing is open under the course's four tests; a plan that holds them can still be argued against, so say in your reasons what it gives and what you give up." : "Each open test below says what it means and gives two ways to act. You decide; a different choice with a clear reason still exports."} The bars show where the money sits; the pale part of Measurable and Risk is the range across both data scenarios.`,
-        `${plan.holding} von ${plan.applicable} Tests stimmen${scn === 1 ? ` bei um ${WEAK_POINTS} Punkte schwächeren Daten` : ""}. ${plan.holding === plan.applicable ? "Unter den vier Tests des Kurses ist nichts offen; ein Plan, der sie hält, lässt sich trotzdem hinterfragen, sagen Sie also in Ihren Begründungen, was er gibt und worauf Sie verzichten." : "Jeder offene Test unten sagt, was er bedeutet, und nennt zwei Wege zu handeln. Sie entscheiden; eine andere Wahl mit klarer Begründung lässt sich trotzdem exportieren."} Die Balken zeigen, wo das Geld liegt; der helle Teil bei Messbar und Risiko ist die Spanne über beide Datenszenarien.`,
+        `${plan.holding} of ${plan.applicable} tests hold${scn === 1 ? ` with the data ${WEAK_POINTS} points weaker` : ""}. ${plan.holding === plan.applicable ? "Nothing is open under the course's four tests; a plan that holds them can still be argued against, so say in your reasons what it gives and what you give up." : "Open “Show the four tests” to see what each open test means and two ways to act. You decide; a different choice with a clear reason still exports."} The bars show where the money sits; the pale part of Measurable and Risk is the range across both data scenarios.`,
+        `${plan.holding} von ${plan.applicable} Tests stimmen${scn === 1 ? ` bei um ${WEAK_POINTS} Punkte schwächeren Daten` : ""}. ${plan.holding === plan.applicable ? "Unter den vier Tests des Kurses ist nichts offen; ein Plan, der sie hält, lässt sich trotzdem hinterfragen, sagen Sie also in Ihren Begründungen, was er gibt und worauf Sie verzichten." : "Öffnen Sie „Die vier Tests zeigen“, um zu sehen, was jeder offene Test bedeutet und welche zwei Wege es gibt. Sie entscheiden; eine andere Wahl mit klarer Begründung lässt sich trotzdem exportieren."} Die Balken zeigen, wo das Geld liegt; der helle Teil bei Messbar und Risiko ist die Spanne über beide Datenszenarien.`,
       );
 
   return (
@@ -184,41 +195,46 @@ export function Panel({ scn, setScn }: { scn: Scn; setScn: (s: Scn) => void }) {
       </div>
 
       <div id="r2-tests" className="space-y-2">
-        <p className="smallcaps text-ash">
-          {tt("Four tests the course teaches", "Vier Tests, die der Kurs lehrt")}
+        <button type="button" aria-expanded={open} aria-controls="r2-tests-body" onClick={() => setOpen(!open)} className="btn-ghost btn-sm">
+          {open ? tt("Hide the four tests", "Die vier Tests ausblenden") : tt("Show the four tests", "Die vier Tests zeigen")}
           {applicable.length > 0 ? ` · ${tt(`${plan.holding} of ${plan.applicable} hold`, `${plan.holding} von ${plan.applicable} stimmen`)}` : ""}
-        </p>
-        {applicable.length === 0 ? (
-          <p className="text-caption text-ash">{tt("No tests yet. Set at least one item to Now in Step A.", "Noch keine Tests. Setzen Sie in Schritt A mindestens einen Punkt auf „Jetzt“.")}</p>
-        ) : (
-          <ul className="space-y-2">
-            {applicable.map((x) => (
-              <li key={x.id} className="space-y-1.5">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-caption font-semibold text-ink">{x.name}</span>
-                  <span className={clsx("pill", x.holds ? "border-signal/50 bg-signalSoft text-signal" : "border-gold bg-accentSoft text-accent")}>{x.holds ? tt("Holds", "Stimmt") : tt("Open", "Offen")}</span>
-                </div>
-                {!x.holds &&
-                  x.open.map((o, i) => (
-                    <div key={i} className="space-y-1 rounded-md border border-gold bg-accentSoft p-2.5 text-caption text-ink">
-                      <p>{o.fact}</p>
-                      <p className="text-ash">
-                        <span className="smallcaps mr-1">{tt("Rule", "Regel")}</span>
-                        {o.rule}
-                      </p>
-                      <p>
-                        <span className="smallcaps mr-1 text-accent">{tt("You can", "Sie können")}</span>
-                      </p>
-                      <ul className="list-disc space-y-0.5 pl-5">
-                        {o.ways.map((w) => (
-                          <li key={w}>{w}</li>
-                        ))}
-                      </ul>
+        </button>
+        {open && (
+          <div id="r2-tests-body" className="fade-in space-y-2">
+            <p className="smallcaps text-ash">{tt("Four tests the course teaches", "Vier Tests, die der Kurs lehrt")}</p>
+            {applicable.length === 0 ? (
+              <p className="text-caption text-ash">{tt("No tests yet. Set at least one item to Now in Step A.", "Noch keine Tests. Setzen Sie in Schritt A mindestens einen Punkt auf „Jetzt“.")}</p>
+            ) : (
+              <ul className="space-y-2">
+                {applicable.map((x) => (
+                  <li key={x.id} className="space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-caption font-semibold text-ink">{x.name}</span>
+                      <span className={clsx("pill", x.holds ? "border-signal/50 bg-signalSoft text-signal" : "border-gold bg-accentSoft text-accent")}>{x.holds ? tt("Holds", "Stimmt") : tt("Open", "Offen")}</span>
                     </div>
-                  ))}
-              </li>
-            ))}
-          </ul>
+                    {!x.holds &&
+                      x.open.map((o, i) => (
+                        <div key={i} className="space-y-1 rounded-md border border-gold bg-accentSoft p-2.5 text-caption text-ink">
+                          <p>{o.fact}</p>
+                          <p className="text-ash">
+                            <span className="smallcaps mr-1">{tt("Rule", "Regel")}</span>
+                            {o.rule}
+                          </p>
+                          <p>
+                            <span className="smallcaps mr-1 text-accent">{tt("You can", "Sie können")}</span>
+                          </p>
+                          <ul className="list-disc space-y-0.5 pl-5">
+                            {o.ways.map((w) => (
+                              <li key={w}>{w}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
 

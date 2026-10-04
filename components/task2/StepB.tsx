@@ -24,6 +24,7 @@ import { MIN_LINE } from "@/lib/progress";
 import { decisionHint, decisionReading, planOf } from "@/lib/r2Panel";
 import type { Scn } from "@/lib/r2Panel";
 import { BLOCK_MINUTES } from "@/lib/routes";
+import { useR2Tests } from "@/store/useR2Tests";
 import { useStore } from "@/store/useStore";
 
 const fmt = (n: number) => num(n, { maximumFractionDigits: 1 });
@@ -125,7 +126,7 @@ export function StepB({ scn }: { scn: Scn }) {
           id="decisionwhy-help"
           refs={[
             { label: tt("Your decision", "Ihre Entscheidung"), value: d ? d.label : tt("not chosen yet", "noch nicht gewählt"), target: IDS.decision },
-            { label: tt("Tests that hold in your plan", "Tests, die in Ihrem Plan stimmen"), value: plan.applicable ? tt(`${plan.holding} of ${plan.applicable}`, `${plan.holding} von ${plan.applicable}`) : tt("none yet", "noch keine"), target: "r2-tests" },
+            { label: tt("Tests that hold in your plan", "Tests, die in Ihrem Plan stimmen"), value: plan.applicable ? tt(`${plan.holding} of ${plan.applicable}`, `${plan.holding} von ${plan.applicable}`) : tt("none yet", "noch keine"), target: "r2-tests", before: () => useR2Tests.getState().setOpen(true) },
           ]}
           steps={[
             tt("Name the rule of Materi B5 the decision rests on: waiting is also a decision, buying everything at once spends the budget before any KPI shows what works, staging decides now and measures before it scales.", "Nennen Sie die Regel aus Materi B5, auf der die Entscheidung beruht: Warten ist auch eine Entscheidung, alles auf einmal zu kaufen gibt das Budget aus, bevor ein KPI zeigt, was wirkt, stufenweise entscheidet jetzt und misst, bevor es skaliert."),

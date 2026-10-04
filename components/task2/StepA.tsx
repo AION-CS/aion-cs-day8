@@ -18,6 +18,7 @@ import { ARCH_EXTRA } from "@/data/route2Extra";
 import { CLEAN_ID, PANEL, TIER_LABEL, WEAK_POINTS } from "@/data/route2Panel";
 import type { Tier } from "@/data/route2Panel";
 import { architectureKey } from "@/lib/answerKey";
+import { scrollToAndFlash } from "@/lib/flash";
 import { Gloss } from "@/lib/glossify";
 import { euro, tt } from "@/lib/lang";
 import { architectureGuide, giveUpGuide, visionGuide } from "@/lib/mentorGuide";
@@ -26,6 +27,7 @@ import { MIN_LINE, MIN_SENTENCE } from "@/lib/progress";
 import { categoryOf, changesFor, planOf, readingOf, standingOf, tierOf } from "@/lib/r2Panel";
 import type { Scn } from "@/lib/r2Panel";
 import { BLOCK_MINUTES } from "@/lib/routes";
+import { useR2Tests } from "@/store/useR2Tests";
 import { useStore } from "@/store/useStore";
 
 /** The order the items are built in: the base first, then measurement, then the data, then what moves a KPI, then what is held back. */
@@ -117,7 +119,10 @@ export function StepA({ scn }: { scn: Scn }) {
                     ? v.never
                       ? tt("Waits for a data clean-up that is not set to Now, so it never starts.", "Wartet auf eine Datenbereinigung, die nicht auf „Jetzt“ steht, und startet daher nie.")
                       : tt(`Starts in month ${v.start}, when the data clean-up is in use, and is in use from month ${v.inUse}.`, `Startet in Monat ${v.start}, wenn die Datenbereinigung im Einsatz ist, und ist ab Monat ${v.inUse} im Einsatz.`)
-                    : tt("Not part of the plan.", "Nicht Teil des Plans.")}
+                    : tt("Not part of the plan.", "Nicht Teil des Plans.")}{" "}
+                <button type="button" onClick={() => scrollToAndFlash(`arch-box-${id}`, "ref", "center")} className="underline decoration-dotted underline-offset-2 hover:text-accentHi">
+                  {tt("See it in the diagram ↑", "Im Diagramm ansehen ↑")}
+                </button>
               </p>
             </div>
           );
@@ -168,7 +173,7 @@ export function StepA({ scn }: { scn: Scn }) {
           <WritingHelp
             id="giveup-help"
             refs={[
-              { label: tt("Tests that hold", "Tests, die stimmen"), value: plan.applicable ? tt(`${plan.holding} of ${plan.applicable}`, `${plan.holding} von ${plan.applicable}`) : tt("none yet", "noch keine"), target: "r2-tests" },
+              { label: tt("Tests that hold", "Tests, die stimmen"), value: plan.applicable ? tt(`${plan.holding} of ${plan.applicable}`, `${plan.holding} von ${plan.applicable}`) : tt("none yet", "noch keine"), target: "r2-tests", before: () => useR2Tests.getState().setOpen(true) },
               { label: tt("Budget", "Budget"), value: tt(`${euro(plan.bars.spent)} of ${euro(R2_BUDGET)}`, `${euro(plan.bars.spent)} von ${euro(R2_BUDGET)}`), target: IDS.panel },
               { label: tt("Items not in the plan", "Punkte, die nicht im Plan sind"), value: notNames.length ? notNames.join(", ") : tt("none", "keine"), target: IDS.arch(BUILD_ORDER[0]) },
             ]}
